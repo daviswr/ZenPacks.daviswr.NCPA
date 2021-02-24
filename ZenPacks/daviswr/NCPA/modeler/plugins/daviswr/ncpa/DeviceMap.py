@@ -1,4 +1,6 @@
-""" Models a system using Nagios Cross-Platform Agent """
+__doc__ = """
+Models device-level attributes using the Nagios Cross-Platform Agent
+"""
 
 import json
 from urllib import urlencode
@@ -14,18 +16,12 @@ from Products.DataCollector.plugins.DataMaps import (
     )
 
 
-class NCPA(PythonPlugin):
-    """ Nagios Cross-Platform Agent modeler plugin """
+class DeviceMap(PythonPlugin):
+    """ Nagios Cross-Platform Agent device modeler plugin """
 
     deviceProperties = PythonPlugin.deviceProperties + (
         'zNcpaToken',
         'zNcpaPort',
-        'zNcpaMonitorServices',
-        'zNcpaMonitorServiceNames',
-        'zNcpaIgnoreServiceNames',
-        'zFileSystemMapIgnoreNames',
-        'zFileSystemMapIgnoreTypes',  # List, not Regex
-        'zInterfaceMapIgnoreDescriptions',
         )
 
     @inlineCallbacks
@@ -45,9 +41,6 @@ class NCPA(PythonPlugin):
             )
         token_param = urlencode({'token': token})
 
-        # Processes and Services not included by default
-        proc_url = '{0}/processes?{1}'.format(api_url, token_param)
-        srv_url = '{0}/services?{1}'.format(api_url, token_param)
         url = '{0}?{1}'.format(api_url, token_param)
 
         log.info('%s: using NCPA API URL %s', device.id, api_url)
@@ -65,30 +58,6 @@ class NCPA(PythonPlugin):
                 returnValue(None)
             else:
                 output = output.get('root', output)
-
-            response = yield getPage(proc_url, method='GET')
-            processes = json.loads(response)
-
-            if 'error' in processes:
-                log.error(
-                    '%s: %s',
-                    device.id,
-                    output['error'].get('message', output['error'])
-                    )
-            else:
-                output = processes.get('processes', [])
-
-            response = yield getPage(srv_url, method='GET')
-            services = json.loads(response)
-
-            if 'error' in services:
-                log.error(
-                    '%s: %s',
-                    device.id,
-                    output['error'].get('message', output['error'])
-                    )
-            else:
-                output = processes.get('services', [])
 
         except Exception, err:
             log.error('%s: %s', device.id, err)
@@ -115,50 +84,32 @@ class NCPA(PythonPlugin):
             }
 
         maps = list()
-
-        # Dictionaries on which to base ObjectMaps on
         device = dict()
-        hw = dict()
-        os = dict()
-        cpus = dict()
-        interfaces = dict()
-        filesystems = dict()
-        disks = dict()
-        processes = dict()
-        services = dict()
 
         device['snmpSysName'] = results.get('system', {}).get('node', '')
-        os['uname'] = results.get('system', {}).get('system', '')
+        platform = results.get('system', {}).get('system', '')
         sw_ver = results.get('system', {}).get('release', '')
 
         device['setHWProductKey'] = MultiArgs(
-            os['uname'] if os['uname'] else 'NCPA',
+            platform if platform else 'NCPA',
             'Nagios',
             )
 
-        if os['uname'] and sw_ver:
-            sw_ver = '{0} {1}'.format(os['uname'], sw_ver)
+        if platform and sw_ver:
+            sw_ver = '{0} {1}'.format(platform, sw_ver)
 
         if 'uek' in sw_ver.lower():
             sw_vendor = 'Oracle'
         elif 'el' in sw_ver.lower():
             sw_vendor = 'RedHat'
-        elif 'mac' in os['uname'].lower():
+        elif 'mac' in platform.lower():
             sw_vendor = 'Apple'
         else:
-            sw_vendor = vendors.get(os['uname'], 'Unknown')
+            sw_vendor = vendors.get(platform, 'Unknown')
 
         device['setOSProductKey'] = MultiArgs(sw_ver, sw_vendor)
 
-        mem = results.get('memory', {}).get('virtual', {}).get('total', [])
-        (mem_value, mem_unit) = mem
-        hw['totalMemory'] = int(mem_value) * multi.get(mem_unit, 1)
-
-        swap = results.get('memory', {}).get('swap', {}).get('total', [])
-        (swap_value, swap_unit) = swap
-        os['totalSwap'] = int(swap_value) * multi.get(swap_unit, 1)
-
-        if 'Windows' == os['uname']:
+        if 'Windows' == platform:
             # Example:
             # Hardware: Intel64 Family 6 Model 44 Stepping 2 AT/AT COMPATIBLE \
             # - Software: Windows Version 6.3 (Build 19042 Multiprocessor Free)
@@ -174,23 +125,31 @@ class NCPA(PythonPlugin):
             # Linux localhost.localdomain 4.1.12-124.48.3.1.el6uek.x86_64 #2 \
             # SMP Fri Feb 12 10:08:08 PST 2021 x86_64
             device['snmpDescr'] = '{0} {1} {2} {3} {4}'.format(
-                os['uname'],
+                platform,
                 device['snmpSysName'],
-                sw_ver,
+                results.get('system', {}).get('release', ''),
                 results.get('system', {}).get('version', ''),
                 results.get('system', {}).get('machine', '')
                 )
 
+        # modname='Products.ZenModel.Device' seems to be implicit
+        maps.append(ObjectMap(data=device))
+
+        mem = results.get('memory', {}).get('virtual', {}).get(
+            'total',
+            [0, '']
+            )
+        (mem_value, mem_unit) = mem
+        mem_total = int(mem_value) * multi.get(mem_unit, 1)
+
+        maps.append(ObjectMap(data={'totalMemory': mem_total}, compname='hw'))
+
+        swap = results.get('memory', {}).get('swap', {}).get('total', [0, ''])
+        (swap_value, swap_unit) = swap
+        swap_total = int(swap_value) * multi.get(swap_unit, 1)
+
         maps.append(ObjectMap(
-            modname='ZenModel.Device',
-            data=device
-            ))
-        maps.append(ObjectMap(
-            data=hw,
-            compname='hw'
-            ))
-        maps.append(ObjectMap(
-            data=os,
+            data={'totalSwap': swap_total, 'uname': platform},
             compname='os'
             ))
 

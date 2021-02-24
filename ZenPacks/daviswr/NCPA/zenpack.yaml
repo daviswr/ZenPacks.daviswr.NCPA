@@ -1,1 +1,89 @@
 name: ZenPacks.daviswr.NCPA
+
+zProperties:
+  DEFAULTS:
+    category: Nagios
+  zNcpaToken:
+    type: string
+  zNcpaPort:
+    type: int
+    default: 5693
+  zNcpaMonitorServices:
+    type: boolean
+    default: false
+  zNcpaMonitorServiceNames:
+    type: list
+  zNcpaIgnoreServiceNames:
+    type: string
+
+device_classes:
+  /Server/NCPA:
+    remove: false
+
+    zProperties:
+      zCollectorPlugins:
+        - daviswr.ncpa.DeviceMap
+      zDeviceTemplates:
+        - Device
+      zNcpaToken: mytoken
+      zSnmpMonitorIgnore: true
+
+    templates:
+      Device:
+        targetPythonClass: Products.ZenModel.Device
+        datasources:
+          Ping:
+            type: PING
+            # Broken on 4.2.5, only cycles every 300 seconds
+            cycletime: 60
+            # The PING datasource will add these itself anyway
+            datapoints:
+              rtt_avg: GAUGE
+              rtt_min: GAUGE
+              rtt_max: GAUGE
+              rtt_losspct: GAUGE
+              rtt_stddev: GAUGE
+
+        graphs:
+          DEFAULTS:
+            miny: 0
+          Ping Time:
+            units: milliseconds
+            graphpoints:
+              DEFAULTS:
+                lineType: LINE
+                lineWidth: 2
+                format: "%5.2lf"
+              Average:
+                dpName: Ping_rtt_avg
+                lineType: AREA
+                # To prevent washed-out color
+                stacked: True
+                colorindex: 0
+              Maximum:
+                dpName: Ping_rtt_max
+                colorindex: 1
+              Minimum:
+                dpName: Ping_rtt_min
+                colorindex: 2
+          Packet Loss:
+            units: percent
+            graphpoints:
+              Loss:
+                dpName: Ping_rtt_losspct
+                lineType: AREA
+                format: "%5.2lf"
+                colorindex: 0
+
+      FileSystem:
+        targetPythonClass: Products.ZenModel.FileSystem
+      OSProcess:
+        targetPythonClass: Products.ZenModel.OSProcess
+      CPU:
+        targetPythonClass: Products.ZenModel.CPU
+      HardDisk:
+        targetPythonClass: Products.ZenModel.HardDisk
+      ethernetCsmacd:
+        targetPythonClass: Products.ZenModel.IpInterface
+      WinService:
+        targetPythonClass: Products.ZenModel.WinService
