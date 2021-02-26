@@ -8,7 +8,7 @@ AUTHOR = "Wes Davis"
 LICENSE = "MIT"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.daviswr']
 PACKAGES = ['ZenPacks', 'ZenPacks.daviswr', 'ZenPacks.daviswr.NCPA']
-INSTALL_REQUIRES = ['ZenPacks.zenoss.ZenPackLib']
+INSTALL_REQUIRES = ['ZenPacks.zenoss.ZenPackLib', 'ZenPacks.zenoss.HttpMonitor', 'ZenPacks.zenoss.PythonCollector']
 COMPAT_ZENOSS_VERS = ">=4.2.5"
 PREV_ZENPACK_NAME = ""
 # STOP_REPLACEMENTS

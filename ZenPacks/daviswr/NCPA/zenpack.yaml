@@ -32,6 +32,24 @@ device_classes:
       Device:
         targetPythonClass: Products.ZenModel.Device
         datasources:
+          ncpa_response:
+            type: HttpMonitor
+            cycletime: 300
+            eventClass: /Status/NCPA
+            component: NCPA
+            hostname: ${dev/manageIp}
+            ipAddress: ${dev/manageIp}
+            port: ${dev/zNcpaPort}
+            useSsl: true
+            url: /api/system/agent_version?token=${dev/zNcpaToken}
+            regex: agent
+            onRedirect: critical
+            timeout: 10
+            datapoints:
+              # Will be automatically added by HttpMonitor anyway
+              time: GAUGE
+              size: GAUGE
+
           Ping:
             type: PING
             # Broken on 4.2.5, only cycles every 300 seconds
@@ -47,6 +65,16 @@ device_classes:
         graphs:
           DEFAULTS:
             miny: 0
+          NCPA Response Time:
+            units: milliseconds
+            graphpoints:
+              Time:
+                dpName: ncpa_response_time
+                rpn: "1000,*"
+                lineType: LINE
+                lineWidth: 2
+                format: "%5.2lf"
+                colorindex: 0
           Ping Time:
             units: milliseconds
             graphpoints:
