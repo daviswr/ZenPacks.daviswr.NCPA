@@ -38,7 +38,7 @@ class DeviceMap(PythonPlugin):
             token=token,
             )
 
-        log.info('%s: using NCPA API URL %s', device.id, url.split('=')[0])
+        log.debug('%s: using NCPA API URL %s', device.id, url.split('=')[0])
 
         try:
             response = yield getPage(url, method='GET')
@@ -126,19 +126,13 @@ class DeviceMap(PythonPlugin):
             'total',
             [0, '']
             )
-        (mem_value, mem_unit) = mem
-        mem_total = int(
-            float(mem_value) * ncpaUtil.multipliers.get(mem_unit, 1)
-            )
-
+        mem_value, mem_unit = mem
+        mem_total = ncpaUtil.get_unit_value(mem_value, mem_unit)
         maps.append(ObjectMap(data={'totalMemory': mem_total}, compname='hw'))
 
         swap = results.get('memory', {}).get('swap', {}).get('total', [0, ''])
-        (swap_value, swap_unit) = swap
-        swap_total = int(
-            float(swap_value) * ncpaUtil.multipliers.get(swap_unit, 1)
-            )
-
+        swap_value, swap_unit = swap
+        swap_total = ncpaUtil.get_unit_value(swap_value, swap_unit)
         maps.append(ObjectMap(
             data={'totalSwap': swap_total, 'uname': platform},
             compname='os'

@@ -32,7 +32,7 @@ class FileSystemMap(PythonPlugin):
     @inlineCallbacks
     def collect(self, device, log):
         """ Asynchronously collect data from device. Return a deferred. """
-        log.info("%s: collecting physical storage data", device.id)
+        log.info("%s: collecting filesystem data", device.id)
 
         token = getattr(device, 'zNcpaToken', None)
 
@@ -109,7 +109,7 @@ class FileSystemMap(PythonPlugin):
                 log.info(
                     '%s: %s ignored due to zFileSystemMapIgnoreNames',
                     device.id,
-                    filesystem
+                    path
                     )
                 ignore = True
             else:
@@ -118,10 +118,10 @@ class FileSystemMap(PythonPlugin):
                         log.info(
                             '%s: %s ignored due to zFileSystemMapIgnoreTypes',
                             device.id,
-                            filesystem
+                            path
                             )
                         ignore = True
-                log.debug('%s: Found filesystem %s', device.id, filesystem)
+                log.debug('%s: Found filesystem %s', device.id, path)
 
             if not ignore:
                 om = self.objectMap()
@@ -133,9 +133,7 @@ class FileSystemMap(PythonPlugin):
                 block_size = int(getattr(device, 'zNcpaFsBlockSize', 4096))
                 om.blockSize = block_size
                 fs_size, fs_unit = fs_dict.get('total', [0, ''])
-                fs_total = int(
-                    float(fs_size) * ncpaUtil.multipliers.get(fs_unit, 1)
-                    )
+                fs_total = ncpaUtil.get_unit_value(fs_size, fs_unit)
                 blocks = (fs_total + 1) / block_size
                 block_count = int(round(blocks))
                 om.totalBlocks = block_count + 1 \
