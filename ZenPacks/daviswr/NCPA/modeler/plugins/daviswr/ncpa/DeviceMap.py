@@ -3,7 +3,6 @@ Models device-level attributes using the Nagios Cross-Platform Agent
 """
 
 import json
-from urllib import urlencode
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
@@ -14,6 +13,8 @@ from Products.DataCollector.plugins.DataMaps import (
     RelationshipMap,
     ObjectMap
     )
+
+from ZenPacks.daviswr.NCPA.lib import ncpaUtil
 
 
 class DeviceMap(PythonPlugin):
@@ -27,7 +28,7 @@ class DeviceMap(PythonPlugin):
     @inlineCallbacks
     def collect(self, device, log):
         """ Asynchronously collect data from device. Return a deferred. """
-        log.info("%s: collecting data", device.id)
+        log.info("%s: collecting device data", device.id)
 
         token = getattr(device, 'zNcpaToken', None)
 
@@ -35,15 +36,13 @@ class DeviceMap(PythonPlugin):
             log.error('%s: zNcpaToken not set', device.id)
             returnValue(None)
 
-        api_url = 'https://{0}:{1}/api'.format(
-            device.manageIp,
-            getattr(device, 'zNcpaPort', '5693'),
+        url = ncpaUtil.build_url(
+            host=device.manageIp,
+            port=getattr(device, 'zNcpaPort', '5693'),
+            token=token,
             )
-        token_param = urlencode({'token': token})
 
-        url = '{0}?{1}'.format(api_url, token_param)
-
-        log.info('%s: using NCPA API URL %s', device.id, api_url)
+        log.info('%s: using NCPA API URL %s', device.id, url.split('=')[0])
 
         try:
             response = yield getPage(url, method='GET')
@@ -67,14 +66,6 @@ class DeviceMap(PythonPlugin):
 
     def process(self, device, results, log):
         """ Process results. Return iterable of datamaps or None. """
-
-        multi = {
-            'KiB': 1024,
-            'MiB': 1024**2,
-            'GiB': 1024**3,
-            'TiB': 1024**4,
-            'PiB': 1024**5,
-            }
 
         vendors = {
             'AIX': 'IBM',
@@ -140,13 +131,13 @@ class DeviceMap(PythonPlugin):
             [0, '']
             )
         (mem_value, mem_unit) = mem
-        mem_total = int(mem_value) * multi.get(mem_unit, 1)
+        mem_total = int(mem_value) * ncpaUtil.multipliers.get(mem_unit, 1)
 
         maps.append(ObjectMap(data={'totalMemory': mem_total}, compname='hw'))
 
         swap = results.get('memory', {}).get('swap', {}).get('total', [0, ''])
         (swap_value, swap_unit) = swap
-        swap_total = int(swap_value) * multi.get(swap_unit, 1)
+        swap_total = int(swap_value) * ncpaUtil.multipliers.get(swap_unit, 1)
 
         maps.append(ObjectMap(
             data={'totalSwap': swap_total, 'uname': platform},
