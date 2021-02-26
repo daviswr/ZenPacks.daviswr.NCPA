@@ -8,6 +8,9 @@ zProperties:
   zNcpaPort:
     type: int
     default: 5693
+  zNcpaFsBlockSize:
+    type: int
+    default: 4096
   zNcpaMonitorServices:
     type: boolean
     default: false
@@ -23,9 +26,19 @@ device_classes:
     zProperties:
       zCollectorPlugins:
         - daviswr.ncpa.DeviceMap
+        - daviswr.ncpa.CpuMap
+        - daviswr.ncpa.HardDiskMap
+        - daviswr.ncpa.FileSystemMap
       zDeviceTemplates:
         - Device
       zNcpaToken: mytoken
+      # Default /Server/Linux + ^nvme\d+n\d+$ + Physical and Drive for Windows
+      zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+|Physical|Drive$"
+      # Type strings don't match HOST-RESOURCES-MIB
+      # https://github.com/NagiosEnterprises/ncpa/blob/master/agent/etc/ncpa.cfg
+      # exclude_fs_types = aufs,autofs,binfmt_misc,cifs,cgroup,configfs,debugfs,devpts,devtmpfs,encryptfs,efivarfs,fuse,fusectl,hugetlbfs,mqueue,nfs,overlayfs,proc,pstore,rpc_pipefs,securityfs,selinuxfs,smb,sysfs,tmpfs,tracefs
+      zFileSystemMapIgnoreTypes:
+        - cdrom
       zSnmpMonitorIgnore: true
 
     templates:
@@ -35,14 +48,14 @@ device_classes:
           ncpa_response:
             type: HttpMonitor
             cycletime: 300
-            eventClass: /Status/NCPA
+            eventClass: /Perf/NCPA
             component: NCPA
             hostname: ${dev/manageIp}
             ipAddress: ${dev/manageIp}
             port: ${dev/zNcpaPort}
             useSsl: true
             url: /api/system/agent_version?token=${dev/zNcpaToken}
-            regex: agent
+            regex: "\"agent_version\":"
             onRedirect: critical
             timeout: 10
             datapoints:
@@ -115,3 +128,9 @@ device_classes:
         targetPythonClass: Products.ZenModel.IpInterface
       WinService:
         targetPythonClass: Products.ZenModel.WinService
+
+
+event_classes:
+  /Perf/NCPA:
+    remove: true
+    description: Nagios Cross-Platform Agent performance
