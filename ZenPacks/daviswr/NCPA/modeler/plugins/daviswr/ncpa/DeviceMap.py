@@ -8,11 +8,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
-from Products.DataCollector.plugins.DataMaps import (
-    MultiArgs,
-    RelationshipMap,
-    ObjectMap
-    )
+from Products.DataCollector.plugins.DataMaps import MultiArgs, ObjectMap
 
 from ZenPacks.daviswr.NCPA.lib import ncpaUtil
 
@@ -131,13 +127,17 @@ class DeviceMap(PythonPlugin):
             [0, '']
             )
         (mem_value, mem_unit) = mem
-        mem_total = int(mem_value) * ncpaUtil.multipliers.get(mem_unit, 1)
+        mem_total = int(
+            float(mem_value) * ncpaUtil.multipliers.get(mem_unit, 1)
+            )
 
         maps.append(ObjectMap(data={'totalMemory': mem_total}, compname='hw'))
 
         swap = results.get('memory', {}).get('swap', {}).get('total', [0, ''])
         (swap_value, swap_unit) = swap
-        swap_total = int(swap_value) * ncpaUtil.multipliers.get(swap_unit, 1)
+        swap_total = int(
+            float(swap_value) * ncpaUtil.multipliers.get(swap_unit, 1)
+            )
 
         maps.append(ObjectMap(
             data={'totalSwap': swap_total, 'uname': platform},
