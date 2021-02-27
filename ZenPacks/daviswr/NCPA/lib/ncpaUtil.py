@@ -3,6 +3,7 @@
 from urllib import urlencode
 
 multipliers = {
+    'B': 1,
     'KiB': 1024,
     'MiB': 1024**2,
     'GiB': 1024**3,
@@ -16,13 +17,21 @@ multipliers = {
     }
 
 
-def build_url(host, port, token, endpoint=''):
+def build_url(host, port, token, endpoint='', params=None):
     """ Returns an NCPA API endpoint URL """
+    api_params = {'token': token, 'units': 'B'}
+    api_params.update(params if params else {})
+
+    # Unsure if this check is necessary
+    if ((isinstance(port, str) and not port.isdigit())
+            or not isinstance(port, int)):
+        port = 5693
+
     return 'https://{0}:{1}/api/{2}?{3}'.format(
         host,
-        port if port else '5693',
+        port,
         endpoint if endpoint else '',
-        urlencode({'token': token})
+        urlencode(api_params)
         )
 
 
