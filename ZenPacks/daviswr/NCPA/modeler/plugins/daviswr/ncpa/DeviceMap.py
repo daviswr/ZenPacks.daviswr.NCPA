@@ -32,17 +32,38 @@ class DeviceMap(PythonPlugin):
             log.error('%s: zNcpaToken not set', device.id)
             returnValue(None)
 
-        url = ncpaUtil.build_url(
+        sys_url = ncpaUtil.build_url(
             host=device.manageIp,
-            port=getattr(device, 'zNcpaPort', '5693'),
+            port=getattr(device, 'zNcpaPort', 5693),
             token=token,
+            endpoint='system'
             )
 
-        log.debug('%s: using NCPA API URL %s', device.id, url.split('=')[0])
+        mem_url = ncpaUtil.build_url(
+            host=device.manageIp,
+            port=getattr(device, 'zNcpaPort', 5693),
+            token=token,
+            endpoint='memory'
+            )
+
+        log.debug(
+            '%s: using NCPA system URL %s',
+            device.id,
+            sys_url.split('=')[0]
+            )
+
+        log.debug(
+            '%s: using NCPA memory URL %s',
+            device.id,
+            mem_url.split('=')[0]
+            )
 
         try:
-            response = yield getPage(url, method='GET')
+            response = yield getPage(sys_url, method='GET')
             output = json.loads(response)
+
+            response = yield getPage(mem_url, method='GET')
+            output.update(json.loads(response))
 
             if 'error' in output:
                 log.error(
@@ -51,8 +72,6 @@ class DeviceMap(PythonPlugin):
                     output['error'].get('message', output['error'])
                     )
                 returnValue(None)
-            else:
-                output = output.get('root', output)
 
         except Exception, err:
             log.error('%s: %s', device.id, err)
@@ -72,10 +91,11 @@ class DeviceMap(PythonPlugin):
 
         maps = list()
         device = dict()
+        system = results.get('system', {})
 
-        device['snmpSysName'] = results.get('system', {}).get('node', '')
-        platform = results.get('system', {}).get('system', '')
-        sw_ver = results.get('system', {}).get('release', '')
+        device['snmpSysName'] = system.get('node', '')
+        platform = system.get('system', '')
+        sw_ver = system.get('release', '')
 
         device['setHWProductKey'] = MultiArgs(
             platform if platform else 'NCPA',
@@ -101,11 +121,11 @@ class DeviceMap(PythonPlugin):
             # Hardware: Intel64 Family 6 Model 44 Stepping 2 AT/AT COMPATIBLE \
             # - Software: Windows Version 6.3 (Build 19042 Multiprocessor Free)
             device['snmpDescr'] = 'Hardware {0} - Software Windows'.format(
-                results.get('system', {}).get('processor', '').split(',')[0]
+                system.get('processor', '').split(',')[0]
                 )
             device['snmpDescr'] += ' Version {0} (Build {1})'.format(
-                results.get('system', {}).get('release', ''),
-                results.get('system', {}).get('version', '').split('.')[-1],
+                system.get('release', ''),
+                system.get('version', '').split('.')[-1],
                 )
         else:
             # Example:
@@ -114,9 +134,9 @@ class DeviceMap(PythonPlugin):
             device['snmpDescr'] = '{0} {1} {2} {3} {4}'.format(
                 platform,
                 device['snmpSysName'],
-                results.get('system', {}).get('release', ''),
-                results.get('system', {}).get('version', ''),
-                results.get('system', {}).get('machine', '')
+                system.get('release', ''),
+                system.get('version', ''),
+                system.get('machine', '')
                 )
 
         # modname='Products.ZenModel.Device' seems to be implicit
