@@ -30,7 +30,7 @@ class HardDiskMap(PythonPlugin):
     @inlineCallbacks
     def collect(self, device, log):
         """ Asynchronously collect data from device. Return a deferred. """
-        log.info("%s: collecting physical storage data", device.id)
+        log.info('%s: collecting physical storage volumes', device.id)
 
         token = getattr(device, 'zNcpaToken', None)
 

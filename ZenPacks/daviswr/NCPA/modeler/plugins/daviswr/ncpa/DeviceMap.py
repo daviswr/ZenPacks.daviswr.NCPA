@@ -24,7 +24,7 @@ class DeviceMap(PythonPlugin):
     @inlineCallbacks
     def collect(self, device, log):
         """ Asynchronously collect data from device. Return a deferred. """
-        log.info("%s: collecting device data", device.id)
+        log.info('%s: collecting device data', device.id)
 
         token = getattr(device, 'zNcpaToken', None)
 
