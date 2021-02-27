@@ -11,13 +11,16 @@ zProperties:
   zNcpaFsBlockSize:
     type: int
     default: 4096
-  zNcpaMonitorServices:
+  # Similar to zLinuxModelAllActiveServices
+  zNcpaModelAllActiveServices:
     type: boolean
     default: false
-  zNcpaMonitorServiceNames:
+  # Similar to zLinuxServicesModeled
+  zNcpaServicesModeled:
     type: list
-  zNcpaIgnoreServiceNames:
-    type: string
+  # Similar to zLinuxServicesNotModeled
+  zNcpaServicesNotModeled:
+    type: list
 
 device_classes:
   /Server/NCPA:
@@ -29,6 +32,7 @@ device_classes:
         - daviswr.ncpa.CpuMap
         - daviswr.ncpa.HardDiskMap
         - daviswr.ncpa.FileSystemMap
+        - daviswr.ncpa.InterfaceMap
       zDeviceTemplates:
         - Device
       zNcpaToken: mytoken
