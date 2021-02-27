@@ -39,14 +39,14 @@ class CpuMap(PythonPlugin):
 
         cpu_url = ncpaUtil.build_url(
             host=device.manageIp,
-            port=getattr(device, 'zNcpaPort', '5693'),
+            port=getattr(device, 'zNcpaPort', 5693),
             token=token,
             endpoint='cpu/count'
             )
 
         sys_url = ncpaUtil.build_url(
             host=device.manageIp,
-            port=getattr(device, 'zNcpaPort', '5693'),
+            port=getattr(device, 'zNcpaPort', 5693),
             token=token,
             endpoint='system/processor'
             )

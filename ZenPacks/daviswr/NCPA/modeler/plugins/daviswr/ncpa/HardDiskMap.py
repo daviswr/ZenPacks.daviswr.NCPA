@@ -40,7 +40,7 @@ class HardDiskMap(PythonPlugin):
 
         url = ncpaUtil.build_url(
             host=device.manageIp,
-            port=getattr(device, 'zNcpaPort', '5693'),
+            port=getattr(device, 'zNcpaPort', 5693),
             token=token,
             endpoint='disk/physical'
             )
@@ -89,18 +89,14 @@ class HardDiskMap(PythonPlugin):
         rm = self.relMap()
 
         for volume in results['physical']:
-            ignore = False
             if harddisk_re and not re.search(harddisk_re, volume):
                 log.info(
                     '%s: %s ignored due to zHardDiskMapMatch',
                     device.id,
                     volume
                     )
-                ignore = True
             else:
                 log.debug('%s: Found storage %s', device.id, volume)
-
-            if not ignore:
                 om = self.objectMap()
                 om.title = volume
                 om.id = self.prepId(volume)
