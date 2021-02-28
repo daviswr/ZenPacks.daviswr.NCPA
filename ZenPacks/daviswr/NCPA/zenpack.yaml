@@ -74,7 +74,7 @@ device_classes:
       zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+$"
       zIcon: /zport/dmd/img/icons/server.png
       zNcpaServicesExpectedRunning:
-        # Nagios XI default Linux services - linux-server_legacy.inc.php
+        # Nagios XI default Linux services
         - apache2
         - cron
         - crond
@@ -218,7 +218,7 @@ device_classes:
       zIcon: /zport/dmd/img/icons/server-windows.png
       zNcpaServicesExpectedRunning:
         - TermService
-        # Nagios XI default Windows services - ncpa.inc.php
+        # Nagios XI default Windows services
         - MSSQLSERVER
         - MSSQL$SQLEXPRESS
         - WinDefend
@@ -226,6 +226,23 @@ device_classes:
         - SQLTELEMETRY$SQLEXPRES
         - WAS
         - W3SVC
+
+
+process_class_organizers:
+  NCPA:
+    remove: true
+    process_classes:
+      DEFAULTS:
+        excludeRegex: "\\b(vim|tail|grep|tar|cat|bash)\\b"
+        fail_severity: 4
+
+      ncpa_listener:
+        description: NCPA HTTP Listener Server
+        includeRegex: ncpa_listener
+
+      ncpa_passive:
+        description: NCPA Passive Server
+        includeRegex: ncpa_passive
 
 
 event_classes:
