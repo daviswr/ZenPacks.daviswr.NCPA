@@ -1,5 +1,32 @@
 name: ZenPacks.daviswr.NCPA
 
+class_relationships:
+  - Products.ZenModel.Device.Device(ncpaServices) 1:MC Service(server)
+
+classes:
+  Service:
+    # zenpacklib.Service makes fields all editable
+    base: [zenpacklib.OSComponent]
+    label: Service
+    properties:
+      DEFAULTS:
+        grid_display: true
+        details_display: true
+      expectedState:
+        label: Expected Status
+        type: int
+        enum: {0: "running", 1: "stopped", 2: "unknown"}
+      operState:
+        label: Status
+        type: int
+        enum: {0: "running", 1: "stopped", 2: "unknown"}
+      expected:
+        label: Expected
+        type: int
+        enum: {0: "clear", 1: "critical"}
+        renderer: Zenoss.render.severity
+
+
 zProperties:
   DEFAULTS:
     category: Nagios
@@ -11,16 +38,17 @@ zProperties:
   zNcpaFsBlockSize:
     type: int
     default: 4096
-  # Similar to zLinuxModelAllActiveServices
-  zNcpaModelAllActiveServices:
-    type: boolean
-    default: false
-  # Similar to zLinuxServicesModeled
-  zNcpaServicesModeled:
-    type: list
-  # Similar to zLinuxServicesNotModeled
-  zNcpaServicesNotModeled:
-    type: list
+  zNcpaServicesExpectedRunning:
+    type: lines
+    default:
+      - ssh
+      - sshd
+      - TermService
+  zNcpaServicesExpectedStopped:
+    type: lines
+  zNcpaServicesIgnored:
+    type: lines
+
 
 device_classes:
   /Server/NCPA:
@@ -33,17 +61,54 @@ device_classes:
         - daviswr.ncpa.HardDiskMap
         - daviswr.ncpa.FileSystemMap
         - daviswr.ncpa.InterfaceMap
+        - daviswr.ncpa.ProcessMap
+        - daviswr.ncpa.ServiceMap
       zDeviceTemplates:
         - Device
-      zNcpaToken: mytoken
-      # Default /Server/Linux + ^nvme\d+n\d+$ + Physical and Drive for Windows
-      zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+|Physical|Drive$"
       # Type strings don't match HOST-RESOURCES-MIB
       # https://github.com/NagiosEnterprises/ncpa/blob/master/agent/etc/ncpa.cfg
       # exclude_fs_types = aufs,autofs,binfmt_misc,cifs,cgroup,configfs,debugfs,devpts,devtmpfs,encryptfs,efivarfs,fuse,fusectl,hugetlbfs,mqueue,nfs,overlayfs,proc,pstore,rpc_pipefs,securityfs,selinuxfs,smb,sysfs,tmpfs,tracefs
       zFileSystemMapIgnoreTypes:
         - cdrom
+      # Default /Server/Linux + ^nvme\d+n\d+$
+      zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+$"
+      zIcon: /zport/dmd/img/icons/server.png
+      zNcpaServicesExpectedRunning:
+        # Nagios XI default Linux services - linux-server_legacy.inc.php
+        - apache2
+        - cron
+        - crond
+        - dovecot
+        - httpd
+        - mysql
+        - mysqld
+        - sendmail
+        - ssh
+        - sshd
+        - syslog
+        - rsyslog
+      zNcpaServicesIgnored:
+        # ZenPacks.zenoss.LinuxMonitor
+        - addhostname
+        - anacron
+        - bluetooth
+        - cpuspeed
+        - ondemand
+        - firstboot
+        - irqbalance
+        - isdn
+        - lvm2-monitor
+        - mcstrans
+        - mdmonitor
+        - portreserve
+        - pppd-dns
+        - rpcgssd
+        - rsync
+        - sudo
+        - sysstat
+      zNcpaToken: mytoken
       zSnmpMonitorIgnore: true
+
 
     templates:
       Device:
@@ -51,7 +116,7 @@ device_classes:
         datasources:
           ncpa_response:
             type: HttpMonitor
-            cycletime: 300
+            cycletime: 60
             eventClass: /Perf/NCPA
             component: NCPA
             hostname: ${dev/manageIp}
@@ -61,7 +126,7 @@ device_classes:
             url: /api/system/agent_version?token=${dev/zNcpaToken}
             regex: "\"agent_version\":"
             onRedirect: critical
-            timeout: 10
+            timeout: 5
             datapoints:
               # Will be automatically added by HttpMonitor anyway
               time: GAUGE
@@ -70,7 +135,9 @@ device_classes:
           Ping:
             type: PING
             # Broken on 4.2.5, only cycles every 300 seconds
-            cycletime: 60
+            # Products.ZenModel.PingDataSource has cycleTime (60)
+            # but Products.ZenModel.RRDDataSource has cycletime
+            cycleTime: 60
             # The PING datasource will add these itself anyway
             datapoints:
               rtt_avg: GAUGE
@@ -120,18 +187,45 @@ device_classes:
                 format: "%5.2lf"
                 colorindex: 0
 
-      FileSystem:
-        targetPythonClass: Products.ZenModel.FileSystem
-      OSProcess:
-        targetPythonClass: Products.ZenModel.OSProcess
       CPU:
         targetPythonClass: Products.ZenModel.CPU
-      HardDisk:
-        targetPythonClass: Products.ZenModel.HardDisk
+
       ethernetCsmacd:
         targetPythonClass: Products.ZenModel.IpInterface
-      WinService:
-        targetPythonClass: Products.ZenModel.WinService
+
+      FileSystem:
+        targetPythonClass: Products.ZenModel.FileSystem
+
+      HardDisk:
+        targetPythonClass: Products.ZenModel.HardDisk
+
+      OSProcess:
+        targetPythonClass: Products.ZenModel.OSProcess
+
+      Service:
+        targetPythonClass: ZenPacks.daviswr.NCPA.NcpaService
+
+
+  /Server/NCPA/Linux:
+    remove: false
+    zProperties:
+      zIcon: /zport/dmd/img/icons/server-linux.png
+
+  /Server/NCPA/Windows:
+    remove: false
+    zProperties:
+      zHardDiskMapMatch: "Physical|Drive"
+      zIcon: /zport/dmd/img/icons/server-windows.png
+      zNcpaServicesExpectedRunning:
+        - TermService
+        # Nagios XI default Windows services - ncpa.inc.php
+        - MSSQLSERVER
+        - MSSQL$SQLEXPRESS
+        - WinDefend
+        - MSSQLTELEMETRY
+        - SQLTELEMETRY$SQLEXPRES
+        - WAS
+        - W3SVC
 
 
 event_classes:
