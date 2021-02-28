@@ -139,7 +139,6 @@ class DeviceMap(PythonPlugin):
                 system.get('machine', '')
                 )
 
-        # modname='Products.ZenModel.Device' seems to be implicit
         maps.append(ObjectMap(data=device))
 
         mem = results.get('memory', {}).get('virtual', {}).get(
