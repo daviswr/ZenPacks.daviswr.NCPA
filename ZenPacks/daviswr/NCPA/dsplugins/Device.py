@@ -1,0 +1,150 @@
+""" Monitors system-level NCPA metrics """
+
+import logging
+LOG = logging.getLogger('zen.NCPA')
+
+import json
+
+from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.web.client import getPage
+
+from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import (
+    PythonDataSourcePlugin
+    )
+
+from ZenPacks.daviswr.NCPA.lib import ncpaUtil
+
+
+class Device(PythonDataSourcePlugin):
+    """ NCPA system-level data source plugin """
+
+    @classmethod
+    def config_key(cls, datasource, context):
+        """ Return a tuple defining collection uniqueness. """
+        return(
+            context.device().id,
+            datasource.getCycleTime(context),
+            context.id,
+            'ncpa',
+            )
+
+    @classmethod
+    def params(cls, datasource, context):
+        """ Return params dictionary needed for this plugin. """
+        return {
+            'token': context.zNcpaToken,
+            'port': context.zNcpaPort,
+            }
+
+    @inlineCallbacks
+    def collect(self, config):
+        data = self.new_data()
+        ip_addr = config.manageIp or config.id
+        LOG.debug('%s: Collecting from NCPA client %s', config.id, ip_addr)
+
+        if not ip_addr:
+            LOG.error('%s: No IP address or hostname', config.id)
+            returnValue(None)
+
+        for datasource in config.datasources:
+            token = datasource.params.get('token', '')
+            port = datasource.params.get('port', 5693)
+
+            if not token:
+                LOG.error('%s: zNcpaToken not set', config.id)
+                returnValue(None)
+
+            urls = list()
+            if 'sysUpTime' == datasource.datasource:
+                urls.append(ncpaUtil.build_url(
+                    host=ip_addr,
+                    port=port,
+                    token=token,
+                    endpoint='system/uptime'
+                    ))
+            else:
+                urls.append(ncpaUtil.build_url(
+                    host=ip_addr,
+                    port=port,
+                    token=token,
+                    endpoint='cpu/percent',
+                    params={'aggregate': 'avg'}
+                    ))
+
+                urls.append(ncpaUtil.build_url(
+                    host=ip_addr,
+                    port=port,
+                    token=token,
+                    endpoint='memory'
+                    ))
+
+            output = dict()
+            try:
+                for url in urls:
+                    response = yield getPage(url, method='GET')
+                    output.update(json.loads(response))
+
+            except Exception, err:
+                LOG.error('%s: %s', config.id, err)
+                returnValue(None)
+
+            LOG.debug('%s: NCPA API output:\n%s', config.id, str(output))
+            stats = dict()
+            # api/system/uptime
+            if output.get('uptime', []):
+                # Convert seconds to timeticks
+                stats['sysUpTime'] = int(output['uptime'][0] * 100)
+
+            # api/cpu/percent
+            if output.get('percent', []):
+                stats['cpu_percent'] = float(output['percent'][0][0])
+
+            # api/memory
+            if output.get('memory', {}).get('virtual', {}):
+                memory = output['memory']['virtual']
+                stats['memory_available'] = ncpaUtil.get_unit_value(
+                    memory['available'][0],
+                    memory['available'][1],
+                    )
+                stats['memory_free'] = ncpaUtil.get_unit_value(
+                    memory['free'][0],
+                    memory['free'][1],
+                    )
+                stats['memory_used'] = ncpaUtil.get_unit_value(
+                    memory['used'][0],
+                    memory['used'][1],
+                    )
+                stats['memory_percent'] = float(memory['percent'][0])
+
+            if output.get('memory', {}).get('swap', {}):
+                swap = output['memory']['swap']
+                stats['swap_free'] = ncpaUtil.get_unit_value(
+                    swap['free'][0],
+                    swap['free'][1],
+                    )
+                stats['swap_used'] = ncpaUtil.get_unit_value(
+                    swap['used'][0],
+                    swap['used'][1],
+                    )
+                stats['swap_percent'] = float(swap['percent'][0])
+                # Windows does not report these metrics
+                if 'swapped_out' in swap:
+                    stats['swap_out'] = ncpaUtil.get_unit_value(
+                        swap['swapped_out'][0],
+                        swap['swapped_out'][1],
+                        )
+                if 'swapped_in' in swap:
+                    stats['swap_in'] = ncpaUtil.get_unit_value(
+                        swap['swapped_in'][0],
+                        swap['swapped_in'][1],
+                        )
+
+            LOG.debug('%s: NCPA metrics:\n%s', config.id, str(stats))
+            for datapoint in datasource.points:
+                if datapoint.id in stats:
+                    value = stats.get(datapoint.id)
+                    data['values'][None][datapoint.dpName] = (value, 'N')
+                else:
+                    continue
+
+        returnValue(data)

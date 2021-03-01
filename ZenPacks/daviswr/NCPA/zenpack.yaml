@@ -12,20 +12,29 @@ classes:
       DEFAULTS:
         grid_display: true
         details_display: true
-      expectedState:
-        label: Expected Status
-        type: int
-        enum: {0: "running", 1: "stopped", 2: "unknown"}
-      operState:
-        label: Status
-        type: int
-        enum: {0: "running", 1: "stopped", 2: "unknown"}
       expected:
         label: Expected
         type: int
         enum: {0: "clear", 1: "critical"}
         renderer: Zenoss.render.severity
-
+        details_display: false
+        order: 11
+      expectedState:
+        label: Expected Status
+        type: int
+        enum: {0: "running", 1: "stopped", 2: "unknown"}
+        grid_display: false
+        order: 6
+      operState:
+        label: Status
+        type: int
+        enum: {0: "running", 1: "stopped", 2: "unknown"}
+        order: 10
+      serviceName:
+        label: Name
+        type: string
+        grid_display: false
+        order: 5
 
 zProperties:
   DEFAULTS:
@@ -48,7 +57,12 @@ zProperties:
     type: lines
   zNcpaServicesIgnored:
     type: lines
-
+  # Warn & crit thresholds for:
+  # cpu util
+  # memory util
+  # process count
+  # filesystem util
+  # network util
 
 device_classes:
   /Server/NCPA:
@@ -74,6 +88,8 @@ device_classes:
       zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+$"
       zIcon: /zport/dmd/img/icons/server.png
       zNcpaServicesExpectedRunning:
+        - ncpa_listener
+        - ncpa_passive
         # Nagios XI default Linux services
         - apache2
         - cron
@@ -109,11 +125,67 @@ device_classes:
       zNcpaToken: mytoken
       zSnmpMonitorIgnore: true
 
-
     templates:
+      # /Server/NCPA/Device
       Device:
         targetPythonClass: Products.ZenModel.Device
         datasources:
+          ncpa:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            cycletime: 60
+            datapoints:
+              cpu_percent:
+                rrdtype: GAUGE
+                aliases:
+                  # Compatibility with Zenoss CPU Utilization report
+                  # https://monitoringartist.github.io/community.zenoss.org/docs/DOC-3025.html
+                  cpu_pct: "0,+"
+                  cpu__pct: "0,+"
+              memory_available:
+                rrdtype: GAUGE
+                aliases:
+                  memoryAvailable__bytes: "0,+"
+              memory_percent:
+                rrdtype: GAUGE
+                aliases:
+                  mem_pct: "0,+"
+                  mem__pct: "0,+"
+              memory_free:
+                rrdtype: GAUGE
+                aliases:
+                  freeMemory: "0,+"
+                  memoryFree__bytes: "0,+"
+              memory_used:
+                rrdtype: GAUGE
+                aliases:
+                  usedMemory: "0,+"
+                  memoryUsed__bytes: "0,+"
+              swap_used:
+                rrdtype: GAUGE
+                aliases:
+                  usedSwap: "0,+"
+                  swapUsed__bytes: "0,+"
+              swap_out: DERIVE_MIN_0
+              swap_in: DERIVE_MIN_0
+              swap_percent:
+                rrdtype: GAUGE
+                aliases:
+                  swap_pct: "0,+"
+                  swap__pct: "0,+"
+              swap_free:
+                rrdtype: GAUGE
+                aliases:
+                  freeSwap: "0,+"
+                  swapFree__bytes: "0,+"
+
+          sysUpTime:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            cycletime: 60
+            datapoints:
+              sysUpTime: GAUGE
+
           ncpa_response:
             type: HttpMonitor
             cycletime: 60
@@ -149,7 +221,70 @@ device_classes:
         graphs:
           DEFAULTS:
             miny: 0
-          NCPA Response Time:
+          CPU Utilization:
+            units: percentage
+            graphpoints:
+              Utilization:
+                dpName: ncpa_cpu_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+          Memory and Swap Summary:
+            units: percentage
+            graphpoints:
+              Memory:
+                dpName: ncpa_memory_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Swap:
+                dpName: ncpa_swap_percent
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 1
+          Memory Utilization:
+            units: bytes
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+              Used:
+                dpName: ncpa_memory_used
+                colorindex: 0
+              Buffers-Cached:
+                dpName: ncpa_memory_free
+                # Total - (Free + Used)
+                rpn: "Used,+,-1,*,${here/hw/totalMemory},+"
+                colorindex: 1
+              Free:
+                dpName: ncpa_memory_free
+                color: cccccc
+          Swap Utilization:
+            units: bytes
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+              Used:
+                dpName: ncpa_swap_used
+                colorindex: 0
+              Free:
+                dpName: ncpa_swap_free
+                color: cccccc
+          Swap Activity:
+            units: bytes/sec
+            graphpoints:
+              In:
+                dpName: ncpa_swap_in
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Out:
+                dpName: ncpa_swap_out
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 1
+          Agent Response Time:
             units: milliseconds
             graphpoints:
               Time:
@@ -170,7 +305,7 @@ device_classes:
                 dpName: Ping_rtt_avg
                 lineType: AREA
                 # To prevent washed-out color
-                stacked: True
+                stacked: true
                 colorindex: 0
               Maximum:
                 dpName: Ping_rtt_max
@@ -187,21 +322,27 @@ device_classes:
                 format: "%5.2lf"
                 colorindex: 0
 
+      # /Server/NCPA/CPU
       CPU:
         targetPythonClass: Products.ZenModel.CPU
 
+      # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
         targetPythonClass: Products.ZenModel.IpInterface
 
+      # /Server/NCPA/FileSystem
       FileSystem:
         targetPythonClass: Products.ZenModel.FileSystem
 
+      # /Server/NCPA/HardDisk
       HardDisk:
         targetPythonClass: Products.ZenModel.HardDisk
 
+      # /Server/NCPA/OSProcess
       OSProcess:
         targetPythonClass: Products.ZenModel.OSProcess
 
+      # /Server/NCPA/Service
       Service:
         targetPythonClass: ZenPacks.daviswr.NCPA.NcpaService
 
@@ -217,6 +358,8 @@ device_classes:
       zHardDiskMapMatch: "Physical|Drive"
       zIcon: /zport/dmd/img/icons/server-windows.png
       zNcpaServicesExpectedRunning:
+        - ncpalistener
+        - ncpapassive
         - TermService
         # Nagios XI default Windows services
         - MSSQLSERVER
@@ -226,6 +369,10 @@ device_classes:
         - SQLTELEMETRY$SQLEXPRES
         - WAS
         - W3SVC
+    templates:
+      # /Server/NCPA/Windows/Device
+      Device:
+        targetPythonClass: Products.ZenModel.Device
 
 
 process_class_organizers:
