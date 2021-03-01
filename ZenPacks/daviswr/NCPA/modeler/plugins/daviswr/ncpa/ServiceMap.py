@@ -131,6 +131,7 @@ class ServiceMap(PythonPlugin):
             if not ignore:
                 log.debug('%s: Found service %s', device.id, service)
                 om = self.objectMap()
+                om.serviceName = service
                 om.expectedState = expected
                 # om.serviceName = service
                 # om.startName = service
