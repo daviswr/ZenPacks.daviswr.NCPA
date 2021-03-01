@@ -79,6 +79,7 @@ device_classes:
         - daviswr.ncpa.ServiceMap
       zDeviceTemplates:
         - Device
+        - Ping
       # Type strings don't match HOST-RESOURCES-MIB
       # https://github.com/NagiosEnterprises/ncpa/blob/master/agent/etc/ncpa.cfg
       # exclude_fs_types = aufs,autofs,binfmt_misc,cifs,cgroup,configfs,debugfs,devpts,devtmpfs,encryptfs,efivarfs,fuse,fusectl,hugetlbfs,mqueue,nfs,overlayfs,proc,pstore,rpc_pipefs,securityfs,selinuxfs,smb,sysfs,tmpfs,tracefs
@@ -204,20 +205,6 @@ device_classes:
               time: GAUGE
               size: GAUGE
 
-          Ping:
-            type: PING
-            # Broken on 4.2.5, only cycles every 300 seconds
-            # Products.ZenModel.PingDataSource has cycleTime (60)
-            # but Products.ZenModel.RRDDataSource has cycletime
-            cycleTime: 60
-            # The PING datasource will add these itself anyway
-            datapoints:
-              rtt_avg: GAUGE
-              rtt_min: GAUGE
-              rtt_max: GAUGE
-              rtt_losspct: GAUGE
-              rtt_stddev: GAUGE
-
         graphs:
           DEFAULTS:
             miny: 0
@@ -251,11 +238,12 @@ device_classes:
               Used:
                 dpName: ncpa_memory_used
                 colorindex: 0
-              Buffers-Cached:
+              Buffers-Cache:
                 dpName: ncpa_memory_free
                 # Total - (Free + Used)
                 rpn: "Used,+,-1,*,${here/hw/totalMemory},+"
                 colorindex: 1
+                legend: "Buffers/Cache"
               Free:
                 dpName: ncpa_memory_free
                 color: cccccc
@@ -294,6 +282,27 @@ device_classes:
                 lineWidth: 2
                 format: "%5.2lf"
                 colorindex: 0
+
+      # /Server/NCPA/Ping
+      Ping:
+        targetPythonClass: Products.ZenModel.Device
+        datasources:
+          Ping:
+            type: PING
+            # Broken on 4.2.5, only cycles every 300 seconds
+            # Products.ZenModel.PingDataSource has cycleTime (60)
+            # but Products.ZenModel.RRDDataSource has cycletime
+            cycleTime: 60
+            # The PING datasource will add these itself anyway
+            datapoints:
+              rtt_avg: GAUGE
+              rtt_min: GAUGE
+              rtt_max: GAUGE
+              rtt_losspct: GAUGE
+              rtt_stddev: GAUGE
+        graphs:
+          DEFAULTS:
+            miny: 0
           Ping Time:
             units: milliseconds
             graphpoints:
@@ -348,6 +357,8 @@ device_classes:
 
 
   /Server/NCPA/Linux:
+    # Inherits everything else from /Server/NCPA
+    # since most NCPA-supported systems are Unix-like
     remove: false
     zProperties:
       zIcon: /zport/dmd/img/icons/server-linux.png
@@ -371,8 +382,146 @@ device_classes:
         - W3SVC
     templates:
       # /Server/NCPA/Windows/Device
+      # Windows does not reported swapped_in or swapped_out metrics
       Device:
         targetPythonClass: Products.ZenModel.Device
+        datasources:
+          ncpa:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            cycletime: 60
+            datapoints:
+              cpu_percent:
+                rrdtype: GAUGE
+                aliases:
+                  # Compatibility with Zenoss CPU Utilization report
+                  # https://monitoringartist.github.io/community.zenoss.org/docs/DOC-3025.html
+                  cpu_pct: "0,+"
+                  cpu__pct: "0,+"
+              memory_available:
+                rrdtype: GAUGE
+                aliases:
+                  memoryAvailable__bytes: "0,+"
+              memory_percent:
+                rrdtype: GAUGE
+                aliases:
+                  mem_pct: "0,+"
+                  mem__pct: "0,+"
+              memory_free:
+                rrdtype: GAUGE
+                aliases:
+                  freeMemory: "0,+"
+                  memoryFree__bytes: "0,+"
+              memory_used:
+                rrdtype: GAUGE
+                aliases:
+                  usedMemory: "0,+"
+                  memoryUsed__bytes: "0,+"
+              swap_used:
+                rrdtype: GAUGE
+                aliases:
+                  usedSwap: "0,+"
+                  swapUsed__bytes: "0,+"
+              swap_percent:
+                rrdtype: GAUGE
+                aliases:
+                  swap_pct: "0,+"
+                  swap__pct: "0,+"
+              swap_free:
+                rrdtype: GAUGE
+                aliases:
+                  freeSwap: "0,+"
+                  swapFree__bytes: "0,+"
+
+          sysUpTime:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            cycletime: 60
+            datapoints:
+              sysUpTime: GAUGE
+
+          ncpa_response:
+            type: HttpMonitor
+            cycletime: 60
+            eventClass: /Perf/NCPA
+            component: NCPA
+            hostname: ${dev/manageIp}
+            ipAddress: ${dev/manageIp}
+            port: ${dev/zNcpaPort}
+            useSsl: true
+            url: /api/system/agent_version?token=${dev/zNcpaToken}
+            regex: "\"agent_version\":"
+            onRedirect: critical
+            timeout: 5
+            datapoints:
+              # Will be automatically added by HttpMonitor anyway
+              time: GAUGE
+              size: GAUGE
+
+        graphs:
+          DEFAULTS:
+            miny: 0
+          CPU Utilization:
+            units: percentage
+            graphpoints:
+              Utilization:
+                dpName: ncpa_cpu_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+          Memory and Swap Summary:
+            units: percentage
+            graphpoints:
+              Memory:
+                dpName: ncpa_memory_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Swap:
+                dpName: ncpa_swap_percent
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 1
+          Memory Utilization:
+            units: bytes
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+              Used:
+                dpName: ncpa_memory_used
+                colorindex: 0
+              Buffers-Cache:
+                dpName: ncpa_memory_free
+                # Total - (Free + Used)
+                rpn: "Used,+,-1,*,${here/hw/totalMemory},+"
+                colorindex: 1
+                legend: "Buffers/Cache"
+              Free:
+                dpName: ncpa_memory_free
+                color: cccccc
+          Swap Utilization:
+            units: bytes
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+              Used:
+                dpName: ncpa_swap_used
+                colorindex: 0
+              Free:
+                dpName: ncpa_swap_free
+                color: cccccc
+          Agent Response Time:
+            units: milliseconds
+            graphpoints:
+              Time:
+                dpName: ncpa_response_time
+                rpn: "1000,*"
+                lineType: LINE
+                lineWidth: 2
+                format: "%5.2lf"
+                colorindex: 0
 
 
 process_class_organizers:
