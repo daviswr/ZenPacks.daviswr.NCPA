@@ -40,20 +40,20 @@ class Device(PythonDataSourcePlugin):
     def collect(self, config):
         data = self.new_data()
         ip_addr = config.manageIp or config.id
-        LOG.debug('%s: Collecting from NCPA client %s', config.id, ip_addr)
+        # zProperties aren't going to change between datasources
+        token = config.datasources[0].params.get('token', '')
+        port = config.datasources[0].params.get('port', 5693)
 
         if not ip_addr:
             LOG.error('%s: No IP address or hostname', config.id)
             returnValue(None)
+        elif not token:
+            LOG.error('%s: zNcpaToken not set', config.id)
+            returnValue(None)
+
+        LOG.debug('%s: Collecting from NCPA client %s', config.id, ip_addr)
 
         for datasource in config.datasources:
-            token = datasource.params.get('token', '')
-            port = datasource.params.get('port', 5693)
-
-            if not token:
-                LOG.error('%s: zNcpaToken not set', config.id)
-                returnValue(None)
-
             urls = list()
             if 'sysUpTime' == datasource.datasource:
                 urls.append(ncpaUtil.build_url(
@@ -103,19 +103,24 @@ class Device(PythonDataSourcePlugin):
                 LOG.error('%s: %s', config.id, err)
                 returnValue(None)
 
-            LOG.debug('%s: NCPA API output:\n%s', config.id, str(output))
+            LOG.debug(
+                '%s: %s NCPA API output:\n%s',
+                config.id,
+                datasource.datasource,
+                str(output)
+                )
             stats = dict()
             # api/system/uptime
-            if output.get('uptime', []):
+            if output.get('uptime', list()):
                 # Convert seconds to timeticks
                 stats['sysUpTime'] = int(output['uptime'][0] * 100)
 
             # api/cpu/percent
-            if output.get('percent', []):
+            if output.get('percent', list()):
                 stats['cpu_percent'] = float(output['percent'][0][0])
 
             # api/memory
-            if output.get('memory', {}).get('virtual', {}):
+            if output.get('memory', dict()).get('virtual', dict()):
                 memory = output['memory']['virtual']
                 stats['memory_available'] = ncpaUtil.get_unit_value(
                     memory['available'][0],
@@ -131,7 +136,7 @@ class Device(PythonDataSourcePlugin):
                     )
                 stats['memory_percent'] = float(memory['percent'][0])
 
-            if output.get('memory', {}).get('swap', {}):
+            if output.get('memory', dict()).get('swap', dict()):
                 swap = output['memory']['swap']
                 stats['swap_free'] = ncpaUtil.get_unit_value(
                     swap['free'][0],
@@ -155,7 +160,7 @@ class Device(PythonDataSourcePlugin):
                         )
 
             # api/processes
-            if output.get('processes', []):
+            if output.get('processes', list()):
                 stats['processes'] = len(output['processes'])
                 stats['mem_rss'] = 0
                 stats['mem_vms'] = 0
@@ -180,10 +185,15 @@ class Device(PythonDataSourcePlugin):
                         stats['proc_cpu'] += cpu_pct
 
             # api/user/count
-            if output.get('count', []):
+            if output.get('count', list()):
                 stats['users'] = output['count'][0]
 
-            LOG.debug('%s: NCPA metrics:\n%s', config.id, str(stats))
+            LOG.debug(
+                '%s: %s NCPA metrics:\n%s',
+                config.id,
+                datasource.datasource,
+                str(stats)
+                )
             for datapoint in datasource.points:
                 if datapoint.id in stats:
                     value = stats.get(datapoint.id)
