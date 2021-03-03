@@ -179,6 +179,12 @@ device_classes:
                 aliases:
                   freeSwap: "0,+"
                   swapFree__bytes: "0,+"
+              processes: GAUGE
+              mem_rss: GAUGE
+              mem_vms: GAUGE
+              proc_cpu: GAUGE
+              proc_mem: GAUGE
+              users: GAUGE
 
           sysUpTime:
             type: Python
@@ -212,9 +218,14 @@ device_classes:
             units: percentage
             graphpoints:
               Utilization:
-                dpName: ncpa_cpu_percent
+                dpName: ncpa_proc_cpu
                 lineType: AREA
                 stacked: true
+                colorindex: 0
+              Average:
+                dpName: ncpa_cpu_percent
+                lineType: LINE
+                lineWidth: 2
                 colorindex: 0
           Memory and Swap Summary:
             units: percentage
@@ -229,8 +240,14 @@ device_classes:
                 lineType: LINE
                 lineWidth: 2
                 colorindex: 1
+              Resident Set:
+                dpName: ncpa_proc_mem
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 2
           Memory Utilization:
             units: bytes
+            base: true
             graphpoints:
               DEFAULTS:
                 lineType: AREA
@@ -247,8 +264,28 @@ device_classes:
               Free:
                 dpName: ncpa_memory_free
                 color: cccccc
+          Memory Allocation:
+            units: bytes
+            base: true
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+              Resident Set:
+                dpName: ncpa_mem_rss
+                colorindex: 0
+              Available:
+                dpName: ncpa_memory_available
+                color: cccccc
+              Virtual Memory:
+                dpName: ncpa_mem_vms
+                lineType: LINE
+                lineWidth: 2
+                stacked: false
+                colorindex: 1
           Swap Utilization:
             units: bytes
+            base: true
             graphpoints:
               DEFAULTS:
                 lineType: AREA
@@ -272,6 +309,26 @@ device_classes:
                 lineType: LINE
                 lineWidth: 2
                 colorindex: 1
+          Total Processes:
+            units: processes
+            graphpoints:
+              Processes:
+                dpName: ncpa_processes
+                lineType: AREA
+                stacked: true
+                rpn: "CEIL,"
+                format: "%5.0lf"
+                colorindex: 0
+          Logged-In Users:
+            units: users
+            graphpoints:
+              Users:
+                dpName: ncpa_users
+                lineType: AREA
+                stacked: true
+                rpn: "CEIL,"
+                format: "%5.0lf"
+                colorindex: 0
           Agent Response Time:
             units: milliseconds
             graphpoints:
@@ -432,6 +489,12 @@ device_classes:
                 aliases:
                   freeSwap: "0,+"
                   swapFree__bytes: "0,+"
+              processes: GAUGE
+              mem_rss: GAUGE
+              mem_vms: GAUGE
+              proc_cpu: GAUGE
+              proc_mem: GAUGE
+              users: GAUGE
 
           sysUpTime:
             type: Python
@@ -465,9 +528,14 @@ device_classes:
             units: percentage
             graphpoints:
               Utilization:
-                dpName: ncpa_cpu_percent
+                dpName: ncpa_proc_cpu
                 lineType: AREA
                 stacked: true
+                colorindex: 0
+              Average:
+                dpName: ncpa_cpu_percent
+                lineType: LINE
+                lineWidth: 2
                 colorindex: 0
           Memory and Swap Summary:
             units: percentage
@@ -482,8 +550,14 @@ device_classes:
                 lineType: LINE
                 lineWidth: 2
                 colorindex: 1
+              Resident Set:
+                dpName: ncpa_proc_mem
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 2
           Memory Utilization:
             units: bytes
+            base: true
             graphpoints:
               DEFAULTS:
                 lineType: AREA
@@ -500,8 +574,28 @@ device_classes:
               Free:
                 dpName: ncpa_memory_free
                 color: cccccc
+          Memory Allocation:
+            units: bytes
+            base: true
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+              Resident Set:
+                dpName: ncpa_mem_rss
+                colorindex: 0
+              Available:
+                dpName: ncpa_memory_available
+                color: cccccc
+              Virtual Memory:
+                dpName: ncpa_mem_vms
+                lineType: LINE
+                lineWidth: 2
+                stacked: false
+                colorindex: 1
           Swap Utilization:
             units: bytes
+            base: true
             graphpoints:
               DEFAULTS:
                 lineType: AREA
@@ -512,6 +606,26 @@ device_classes:
               Free:
                 dpName: ncpa_swap_free
                 color: cccccc
+          Total Processes:
+            units: processes
+            graphpoints:
+              Processes:
+                dpName: ncpa_processes
+                lineType: AREA
+                stacked: true
+                rpn: "CEIL,"
+                format: "%5.0lf"
+                colorindex: 0
+          Logged-In Users:
+            units: users
+            graphpoints:
+              Users:
+                dpName: ncpa_users
+                lineType: AREA
+                stacked: true
+                rpn: "CEIL,"
+                format: "%5.0lf"
+                colorindex: 0
           Agent Response Time:
             units: milliseconds
             graphpoints:

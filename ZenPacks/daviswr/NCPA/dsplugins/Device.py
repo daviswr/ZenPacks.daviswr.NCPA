@@ -78,6 +78,21 @@ class Device(PythonDataSourcePlugin):
                     endpoint='memory'
                     ))
 
+                urls.append(ncpaUtil.build_url(
+                    host=ip_addr,
+                    port=port,
+                    token=token,
+                    endpoint='processes',
+                    params={'aggregate': 'avg'}
+                    ))
+
+                urls.append(ncpaUtil.build_url(
+                    host=ip_addr,
+                    port=port,
+                    token=token,
+                    endpoint='user/count'
+                    ))
+
             output = dict()
             try:
                 for url in urls:
@@ -138,6 +153,35 @@ class Device(PythonDataSourcePlugin):
                         swap['swapped_in'][0],
                         swap['swapped_in'][1],
                         )
+
+            # api/processes
+            if output.get('processes', []):
+                stats['processes'] = len(output['processes'])
+                stats['mem_rss'] = 0
+                stats['mem_vms'] = 0
+                stats['proc_cpu'] = 0.0
+                stats['proc_mem'] = 0.0
+                for process in output['processes']:
+                    stats['mem_rss'] += ncpaUtil.get_unit_value(
+                        process['mem_rss'][0],
+                        process['mem_rss'][1],
+                        )
+                    stats['mem_vms'] += ncpaUtil.get_unit_value(
+                        process['mem_vms'][0],
+                        process['mem_vms'][1],
+                        )
+                    mem_pct = process.get('mem_percent', [0.0, ''])[0]
+                    stats['proc_mem'] += mem_pct
+                    if process.get('name', '') == 'System Idle Process':
+                        # CPU will always read 100% if System Idle is included
+                        stats['processes'] -= 1
+                    else:
+                        cpu_pct = process.get('cpu_percent', [0.0, ''])[0]
+                        stats['proc_cpu'] += cpu_pct
+
+            # api/user/count
+            if output.get('count', []):
+                stats['users'] = output['count'][0]
 
             LOG.debug('%s: NCPA metrics:\n%s', config.id, str(stats))
             for datapoint in datasource.points:
