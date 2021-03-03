@@ -423,6 +423,48 @@ device_classes:
       # /Server/NCPA/HardDisk
       HardDisk:
         targetPythonClass: Products.ZenModel.HardDisk
+        datasources:
+          disk-physical:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Storage
+            eventClass: /Storage
+            component: "${here/id}"
+            cycletime: 60
+            datapoints:
+              read_bytes: DERIVE_MIN_0
+              read_count: DERIVE_MIN_0
+              write_bytes: DERIVE_MIN_0
+              write_count: DERIVE_MIN_0
+        graphs:
+          DEFAULTS:
+            miny: 0
+          Activity:
+            units: IOPS
+            graphpoints:
+              Write:
+                dpName: disk-physical_write_count
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Read:
+                dpName: disk-physical_read_count
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 1
+          Throughput:
+            units: bytes/sec
+            base: true
+            graphpoints:
+              Write:
+                dpName: disk-physical_write_bytes
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Read:
+                dpName: disk-physical_read_bytes
+                lineType: LINE
+                lineWidth: 2
+                colorindex: 1
 
       # /Server/NCPA/OSProcess
       OSProcess:
