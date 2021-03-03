@@ -14,8 +14,8 @@ classes:
         details_display: true
       expected:
         label: Expected
-        type: int
-        enum: {0: "clear", 1: "critical"}
+        type: boolean
+        enum: {true: "clear", false: "critical"}
         renderer: Zenoss.render.severity
         details_display: false
         order: 11
