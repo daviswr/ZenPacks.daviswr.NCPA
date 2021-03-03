@@ -143,47 +143,47 @@ device_classes:
                   # https://monitoringartist.github.io/community.zenoss.org/docs/DOC-3025.html
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
+              mem_rss: GAUGE
+              mem_vms: GAUGE
               memory_available:
                 rrdtype: GAUGE
                 aliases:
                   memoryAvailable__bytes: "0,+"
-              memory_percent:
-                rrdtype: GAUGE
-                aliases:
-                  mem_pct: "0,+"
-                  mem__pct: "0,+"
               memory_free:
                 rrdtype: GAUGE
                 aliases:
                   freeMemory: "0,+"
                   memoryFree__bytes: "0,+"
+              memory_percent:
+                rrdtype: GAUGE
+                aliases:
+                  mem_pct: "0,+"
+                  mem__pct: "0,+"
               memory_used:
                 rrdtype: GAUGE
                 aliases:
                   usedMemory: "0,+"
                   memoryUsed__bytes: "0,+"
-              swap_used:
-                rrdtype: GAUGE
-                aliases:
-                  usedSwap: "0,+"
-                  swapUsed__bytes: "0,+"
-              swap_out: DERIVE_MIN_0
-              swap_in: DERIVE_MIN_0
-              swap_percent:
-                rrdtype: GAUGE
-                aliases:
-                  swap_pct: "0,+"
-                  swap__pct: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
                   freeSwap: "0,+"
                   swapFree__bytes: "0,+"
-              processes: GAUGE
-              mem_rss: GAUGE
-              mem_vms: GAUGE
+              swap_in: DERIVE_MIN_0
+              swap_out: DERIVE_MIN_0
+              swap_percent:
+                rrdtype: GAUGE
+                aliases:
+                  swap_pct: "0,+"
+                  swap__pct: "0,+"
+              swap_used:
+                rrdtype: GAUGE
+                aliases:
+                  usedSwap: "0,+"
+                  swapUsed__bytes: "0,+"
               proc_cpu: GAUGE
               proc_mem: GAUGE
+              processes: GAUGE
               users: GAUGE
 
           sysUpTime:
@@ -517,45 +517,45 @@ device_classes:
                   # https://monitoringartist.github.io/community.zenoss.org/docs/DOC-3025.html
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
+              mem_rss: GAUGE
+              mem_vms: GAUGE
               memory_available:
                 rrdtype: GAUGE
                 aliases:
                   memoryAvailable__bytes: "0,+"
-              memory_percent:
-                rrdtype: GAUGE
-                aliases:
-                  mem_pct: "0,+"
-                  mem__pct: "0,+"
               memory_free:
                 rrdtype: GAUGE
                 aliases:
                   freeMemory: "0,+"
                   memoryFree__bytes: "0,+"
+              memory_percent:
+                rrdtype: GAUGE
+                aliases:
+                  mem_pct: "0,+"
+                  mem__pct: "0,+"
               memory_used:
                 rrdtype: GAUGE
                 aliases:
                   usedMemory: "0,+"
                   memoryUsed__bytes: "0,+"
-              swap_used:
-                rrdtype: GAUGE
-                aliases:
-                  usedSwap: "0,+"
-                  swapUsed__bytes: "0,+"
-              swap_percent:
-                rrdtype: GAUGE
-                aliases:
-                  swap_pct: "0,+"
-                  swap__pct: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
                   freeSwap: "0,+"
                   swapFree__bytes: "0,+"
-              processes: GAUGE
-              mem_rss: GAUGE
-              mem_vms: GAUGE
+              swap_percent:
+                rrdtype: GAUGE
+                aliases:
+                  swap_pct: "0,+"
+                  swap__pct: "0,+"
+              swap_used:
+                rrdtype: GAUGE
+                aliases:
+                  usedSwap: "0,+"
+                  swapUsed__bytes: "0,+"
               proc_cpu: GAUGE
               proc_mem: GAUGE
+              processes: GAUGE
               users: GAUGE
 
           sysUpTime:
