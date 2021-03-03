@@ -395,6 +395,8 @@ device_classes:
           cpu:
             type: Python
             plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Processor
+            eventClass: /Perf/CPU
+            component: "${here/id}"
             cycletime: 60
             datapoints:
               percent: GAUGE
