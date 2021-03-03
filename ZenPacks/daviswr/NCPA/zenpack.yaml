@@ -391,6 +391,24 @@ device_classes:
       # /Server/NCPA/CPU
       CPU:
         targetPythonClass: Products.ZenModel.CPU
+        datasources:
+          cpu:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Processor
+            cycletime: 60
+            datapoints:
+              percent: GAUGE
+        graphs:
+          Utilization:
+            units: percentage
+            miny: 0
+            maxy: 100
+            graphpoints:
+              Utilization:
+                dpName: cpu_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
 
       # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
