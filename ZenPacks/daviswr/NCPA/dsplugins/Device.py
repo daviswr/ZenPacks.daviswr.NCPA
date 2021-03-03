@@ -198,7 +198,5 @@ class Device(PythonDataSourcePlugin):
                 if datapoint.id in stats:
                     value = stats.get(datapoint.id)
                     data['values'][None][datapoint.dpName] = (value, 'N')
-                else:
-                    continue
 
         returnValue(data)

@@ -24,8 +24,7 @@ class Processor(PythonDataSourcePlugin):
         return(
             context.device().id,
             datasource.getCycleTime(context),
-            context.id,
-            'ncpa',
+            'cpu',
             )
 
     @classmethod
@@ -100,7 +99,5 @@ class Processor(PythonDataSourcePlugin):
                     value = stats.get(datapoint_id)
                     dpname = '_'.join((datasource.datasource, datapoint_id))
                     data['values'][datasource.component][dpname] = (value, 'N')
-                else:
-                    continue
 
         returnValue(data)
