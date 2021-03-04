@@ -133,7 +133,7 @@ device_classes:
         datasources:
           ncpa:
             type: Python
-            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
               cpu_percent:
@@ -188,7 +188,7 @@ device_classes:
 
           sysUpTime:
             type: Python
-            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
               sysUpTime: GAUGE
@@ -394,7 +394,7 @@ device_classes:
         datasources:
           cpu:
             type: Python
-            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Processor
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             eventClass: /Perf/CPU
             component: "${here/id}"
             cycletime: 60
@@ -426,7 +426,7 @@ device_classes:
         datasources:
           disk-physical:
             type: Python
-            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Storage
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             eventClass: /Storage
             component: "${here/id}"
             cycletime: 60
@@ -507,7 +507,7 @@ device_classes:
         datasources:
           ncpa:
             type: Python
-            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
               cpu_percent:
@@ -560,7 +560,7 @@ device_classes:
 
           sysUpTime:
             type: Python
-            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Device
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
               sysUpTime: GAUGE
