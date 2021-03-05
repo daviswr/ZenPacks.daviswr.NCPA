@@ -121,7 +121,7 @@ class Agent(PythonDataSourcePlugin):
             'cpu': dict(),
             'disk-logical': dict(),
             'disk-physical': dict(),
-            'interface': dict(),
+            'intf': dict(),
             'ncpa': {None: dict()},
             'processes': dict(),
             'services': dict(),
@@ -151,10 +151,7 @@ class Agent(PythonDataSourcePlugin):
                             config.id
                             )
                         for item_name in subnode:
-                            comp = prepId(item_name.replace(
-                                '|',
-                                '/' if item_name.startswith('|') else '',
-                                ))
+                            comp = prepId(item_name)
                             item = subnode[item_name]
                             stats[src][comp] = {}
                     # api/disk/physical - HardDisk components
@@ -181,11 +178,32 @@ class Agent(PythonDataSourcePlugin):
             # api/interface - IPInterface components
             elif 'interface' == node_name:
                 LOG.debug('%s: Processing api/interface', config.id)
-                src = node_name
+                # Emulate ZenCommand-based datasource name
+                src = 'intf'
                 for item_name in node:
                     comp = prepId(item_name)
                     item = node[item_name]
-                    stats[src][comp] = {}
+                    stats[src][comp] = {
+                        # Name the datapoints after the
+                        # IF-MIB::ifEntry counterparts.
+                        # Mainly for compat with Zenoss.daviswr.Interfaces
+                        'ifInOctets': ncpaUtil.get_unit_value(
+                            item['bytes_recv'][0],
+                            item['bytes_recv'][1]
+                            ),
+                        'ifOutOctets': ncpaUtil.get_unit_value(
+                            item['bytes_sent'][0],
+                            item['bytes_sent'][1]
+                            ),
+                        'ifInDiscards': item['dropin'][0],
+                        'ifOutDiscards': item['dropout'][0],
+                        'ifInErrors': item['errin'][0],
+                        'ifOutErrors': item['errout'][0],
+                        # IF-MIB doesn't have matching counters for *all*
+                        # packets, regardless of ucast, mcast, bcast
+                        'ifInPkts': item['packets_recv'][0],
+                        'ifOutPkts': item['packets_sent'][0],
+                        }
             # api/memory
             elif 'memory' == node_name:
                 for subnode_name in node:
@@ -288,7 +306,12 @@ class Agent(PythonDataSourcePlugin):
                 for item_name in node:
                     comp = prepId(item_name)
                     item = node[item_name]
-                    stats[src][comp] = {}
+                    stats[src][comp] = {
+                        'status': ncpaUtil.service_states.get(
+                            item,
+                            ncpaUtil.service_states.get('unknown', 2)
+                            )
+                        }
             # api/system
             elif 'system' == node_name:
                 LOG.debug('%s: Processing api/system', config.id)

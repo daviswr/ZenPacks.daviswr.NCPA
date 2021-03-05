@@ -12,13 +12,6 @@ classes:
       DEFAULTS:
         grid_display: true
         details_display: true
-      expected:
-        label: Expected
-        type: boolean
-        enum: {true: "clear", false: "critical"}
-        renderer: Zenoss.render.severity
-        details_display: false
-        order: 11
       expectedState:
         label: Expected Status
         type: int
@@ -26,8 +19,9 @@ classes:
         grid_display: false
         order: 6
       operState:
-        label: Status
+        label: Current Status
         type: int
+        datapoint: services_status
         enum: {0: "running", 1: "stopped", 2: "unknown"}
         order: 10
       serviceName:
@@ -62,7 +56,6 @@ zProperties:
   # memory util
   # process count
   # filesystem util
-  # network util
 
 device_classes:
   /Server/NCPA:
@@ -141,6 +134,8 @@ device_classes:
                 aliases:
                   # Compatibility with Zenoss CPU Utilization report
                   # https://monitoringartist.github.io/community.zenoss.org/docs/DOC-3025.html
+                  # https://help.zenoss.com/docs/appendixes/key-metrics
+                  cpu_cpu: "0,+"
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
               mem_rss: GAUGE
@@ -148,6 +143,8 @@ device_classes:
               memory_available:
                 rrdtype: GAUGE
                 aliases:
+                  mem_memAvailReal: "0,+"
+                  memAvailReal_memAvailReal: "0,+"
                   memoryAvailable__bytes: "0,+"
               memory_free:
                 rrdtype: GAUGE
@@ -157,17 +154,24 @@ device_classes:
               memory_percent:
                 rrdtype: GAUGE
                 aliases:
+                  mem_mem: "0,+"
                   mem_pct: "0,+"
                   mem__pct: "0,+"
+                  mem_percentMemUsed: "0,+"
+                  mem_MemUsedPercent: "0,+"
               memory_used:
                 rrdtype: GAUGE
                 aliases:
-                  usedMemory: "0,+"
+                  mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
+                  usedMemory: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
                   freeSwap: "0,+"
+                  mem_memAvailSwap: "0,+"
+                  mem_SwapFree: "0,+"
+                  memAvailSwap_memAvailSwap: "0,+"
                   swapFree__bytes: "0,+"
               swap_in: DERIVE_MIN_0
               swap_out: DERIVE_MIN_0
@@ -179,8 +183,8 @@ device_classes:
               swap_used:
                 rrdtype: GAUGE
                 aliases:
-                  usedSwap: "0,+"
                   swapUsed__bytes: "0,+"
+                  usedSwap: "0,+"
               proc_cpu: GAUGE
               proc_mem: GAUGE
               processes: GAUGE
@@ -213,6 +217,8 @@ device_classes:
 
         graphs:
           DEFAULTS:
+            height: 100
+            width: 500
             miny: 0
           CPU Utilization:
             units: percentage
@@ -359,6 +365,8 @@ device_classes:
               rtt_stddev: GAUGE
         graphs:
           DEFAULTS:
+            height: 100
+            width: 500
             miny: 0
           Ping Time:
             units: milliseconds
@@ -401,9 +409,12 @@ device_classes:
             datapoints:
               percent: GAUGE
         graphs:
+          DEFAULTS:
+            height: 100
+            width: 500
+            miny: 0
           Utilization:
             units: percentage
-            miny: 0
             maxy: 100
             graphpoints:
               Utilization:
@@ -415,6 +426,114 @@ device_classes:
       # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
         targetPythonClass: Products.ZenModel.IpInterface
+        datasources:
+          # Emulate ZenCommand-based datasource name
+          intf:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
+            eventClass: /Perf/Interface
+            component: "${here/id}"
+            cycletime: 60
+            datapoints:
+              # Name the datapoints after the IF-MIB::ifEntry counterparts,
+              # mainly for compat with Zenoss.daviswr.Interfaces transforms.
+              # Though IF-MIB doesn't have a matching counter set for
+              #  *all* packets, regardless of ucast, mcast, bcast
+              ifInDiscards: DERIVE_MIN_0
+              ifInErrors:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ifInErrors_ifInErrors: "0,+"
+              ifInOctets:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ifInOctets_ifInOctets: "0,+"
+                  ethTraffic_Receive_Bytes: "0,+"
+              ifInPkts:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  intf_ifInPackets: "0,+"
+              ifOutDiscards: DERIVE_MIN_0
+              ifOutErrors:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ifOutErrors_ifOutErrors: "0,+"
+              ifOutOctets:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ifOutOctets_ifOutOctets: "0,+"
+                  ethTraffic_Transmit_Bytes: "0,+"
+              ifOutPkts:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  intf_ifOutPackets: "0,+"
+              # NCPA does not report status similarly to IF-MIB::ifOperStatus
+        graphs:
+          DEFAULTS:
+            height: 100
+            width: 500
+            miny: 0
+          Throughput:
+            units: bits/sec
+            base: true
+            graphpoints:
+              Inbound:
+                dpName: intf_ifInOctets
+                lineType: AREA
+                stacked: true
+                rpn: 8,*
+                colorindex: 0
+              Outbound:
+                dpName: intf_ifOutOctets
+                lineType: LINE
+                lineWidth: 1
+                rpn: 8,*
+                colorindex: 1
+          Packets:
+            units: packets/sec
+            graphpoints:
+              Inbound:
+                dpName: intf_ifInPkts
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Outbound:
+                dpName: intf_ifOutPkts
+                lineType: LINE
+                lineWidth: 1
+                colorindex: 1
+          Errors:
+            units: packets/sec
+            graphpoints:
+              Input:
+                dpName: intf_ifInErrors
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Output:
+                dpName: intf_ifOutErrors
+                lineType: LINE
+                lineWidth: 1
+                colorindex: 1
+          Drops:
+            units: packets/sec
+            graphpoints:
+              Input:
+                dpName: intf_ifInDiscards
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Output:
+                dpName: intf_ifOutDiscards
+                lineType: LINE
+                lineWidth: 1
+                colorindex: 1
 
       # /Server/NCPA/FileSystem
       FileSystem:
@@ -437,6 +556,8 @@ device_classes:
               write_count: DERIVE_MIN_0
         graphs:
           DEFAULTS:
+            height: 100
+            width: 500
             miny: 0
           Activity:
             units: IOPS
@@ -473,7 +594,23 @@ device_classes:
       # /Server/NCPA/Service
       Service:
         targetPythonClass: ZenPacks.daviswr.NCPA.NcpaService
-
+        datasources:
+          services:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
+            cycletime: 60
+            datapoints:
+              status: GAUGE
+        thresholds:
+          Service Status:
+            type: MinMaxThreshold
+            dsnames:
+              - services_status
+            severity: 4
+            enabled: true
+            eventClass: /Status/NCPA
+            minval: here.expectedState
+            maxval: here.expectedState
 
   /Server/NCPA/Linux:
     # Inherits everything else from /Server/NCPA
@@ -513,8 +650,7 @@ device_classes:
               cpu_percent:
                 rrdtype: GAUGE
                 aliases:
-                  # Compatibility with Zenoss CPU Utilization report
-                  # https://monitoringartist.github.io/community.zenoss.org/docs/DOC-3025.html
+                  cpu_cpu: "0,+"
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
               mem_rss: GAUGE
@@ -522,6 +658,8 @@ device_classes:
               memory_available:
                 rrdtype: GAUGE
                 aliases:
+                  mem_memAvailReal: "0,+"
+                  memAvailReal_memAvailReal: "0,+"
                   memoryAvailable__bytes: "0,+"
               memory_free:
                 rrdtype: GAUGE
@@ -531,17 +669,24 @@ device_classes:
               memory_percent:
                 rrdtype: GAUGE
                 aliases:
+                  mem_mem: "0,+"
                   mem_pct: "0,+"
                   mem__pct: "0,+"
+                  mem_percentMemUsed: "0,+"
+                  mem_MemUsedPercent: "0,+"
               memory_used:
                 rrdtype: GAUGE
                 aliases:
-                  usedMemory: "0,+"
+                  mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
+                  usedMemory: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
                   freeSwap: "0,+"
+                  mem_memAvailSwap: "0,+"
+                  mem_SwapFree: "0,+"
+                  memAvailSwap_memAvailSwap: "0,+"
                   swapFree__bytes: "0,+"
               swap_percent:
                 rrdtype: GAUGE
@@ -551,8 +696,8 @@ device_classes:
               swap_used:
                 rrdtype: GAUGE
                 aliases:
-                  usedSwap: "0,+"
                   swapUsed__bytes: "0,+"
+                  usedSwap: "0,+"
               proc_cpu: GAUGE
               proc_mem: GAUGE
               processes: GAUGE
@@ -585,6 +730,8 @@ device_classes:
 
         graphs:
           DEFAULTS:
+            height: 100
+            width: 500
             miny: 0
           CPU Utilization:
             units: percentage
@@ -721,3 +868,19 @@ event_classes:
   /Perf/NCPA:
     remove: true
     description: Nagios Cross-Platform Agent performance
+
+  /Status/NCPA:
+    remove: true
+    description: Nagios Cross-Platform Agent status
+    transform: |-
+      from ZenPacks.daviswr.NCPA.lib.ncpaUtil import service_states
+
+      service_strings = dict(map(reversed, service_states.items()))
+
+      if evt.eventKey.endswith('|Service Status'):
+          status = service_strings.get(
+              int(float(evt.current)),
+              'unknown'
+              )
+
+          evt.summary = '{0} service is {1}'.format(evt.component, status)
