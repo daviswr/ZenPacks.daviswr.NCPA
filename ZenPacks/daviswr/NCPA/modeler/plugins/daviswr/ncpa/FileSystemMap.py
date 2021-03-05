@@ -140,7 +140,7 @@ class FileSystemMap(PythonPlugin):
                     if block_count < blocks \
                     else block_count
                 om.title = path
-                om.id = self.prepId(path)
+                om.id = self.prepId(filesystem)
                 rm.append(om)
 
         log.debug('%s RelMap:\n%s', self.name(), str(rm))
