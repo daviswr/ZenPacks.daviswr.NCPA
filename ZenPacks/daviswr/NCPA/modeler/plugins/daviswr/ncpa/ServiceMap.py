@@ -74,8 +74,6 @@ class ServiceMap(PythonPlugin):
             log.error('Unable to get services for %s', device.id)
             return None
 
-        states = {'running': 0, 'stopped': 1, 'unknown': 2}
-
         run_list = getattr(device, 'zNcpaServicesExpectedRunning', [])
         stop_list = getattr(device, 'zNcpaServicesExpectedStopped', [])
         ignore_list = getattr(device, 'zNcpaServicesIgnored', [])
@@ -110,7 +108,7 @@ class ServiceMap(PythonPlugin):
         rm = self.relMap()
 
         for service in results['services']:
-            expected = states['unknown']
+            expected = ncpaUtil.service_states['unknown']
             if service in ignore_list:
                 log.info(
                     '%s: %s ignored due to zNcpaServicesIgnored',
@@ -120,10 +118,10 @@ class ServiceMap(PythonPlugin):
                 ignore = True
             elif run_list and service in run_list:
                 ignore = False
-                expected = states['running']
+                expected = ncpaUtil.service_states['running']
             elif stop_list and service in stop_list:
                 ignore = False
-                expected = states['stopped']
+                expected = ncpaUtil.service_states['stopped']
             else:
                 ignore = True
                 log.debug('%s: Service %s ignored ', device.id, service)

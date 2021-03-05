@@ -16,6 +16,8 @@ multipliers = {
     'PB': 1000**5,
     }
 
+service_states = {'running': 0, 'stopped': 1, 'unknown': 2}
+
 
 def build_url(host, port, token, endpoint='', params=None):
     """ Returns an NCPA API endpoint URL """
