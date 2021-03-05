@@ -30,7 +30,7 @@ class ProcessMap(PythonPlugin):
     @inlineCallbacks
     def collect(self, device, log):
         """ Asynchronously collect data from device. Return a deferred. """
-        log.info('%s: collecting services', device.id)
+        log.info('%s: collecting processes', device.id)
 
         token = getattr(device, 'zNcpaToken', None)
 
@@ -46,7 +46,7 @@ class ProcessMap(PythonPlugin):
             )
 
         log.debug(
-            '%s: using NCPA services URL %s', device.id,
+            '%s: using NCPA processes URL %s', device.id,
             url.split('=')[0]
             )
 
