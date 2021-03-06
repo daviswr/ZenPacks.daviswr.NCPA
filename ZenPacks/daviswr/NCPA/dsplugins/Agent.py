@@ -317,14 +317,6 @@ class Agent(PythonDataSourcePlugin):
                                 subnode['used'][1],
                                 ),
                             })
-            # api/cpu/percent - CPU components
-            # elif 'percent' == node_name:
-            #     LOG.debug('%s: Processing api/cpu/percent', config.id)
-            #     src = 'cpu'
-            #     for item_name in range(0, len(node[0])):
-            #         comp = prepId(str(item_name))
-            #         item = node[0][item_name]
-            #         stats[src][comp] = {'percent': float(item)}
             # api/processes
             elif 'processes' == node_name:
                 LOG.debug('%s: Processing api/processes', config.id)
