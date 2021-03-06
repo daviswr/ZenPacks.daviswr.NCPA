@@ -662,26 +662,6 @@ device_classes:
                 rrdmin: 0
                 aliases:
                   hd_diskwritebytes__sec: "0,+"
-              # read_time + write_time
-              msDoingIO:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  disk_busy__pct: "10,/"
-              # read_time
-              msReading:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  disk_read_time__pct: "10,/"
-                  hd_diskreadtime: "0,+"
-              # write_time
-              msWriting:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  disk_write_time__pct: "10,/"
-                  hd_diskwritetime: "0,+"
               # read_count
               readsCompleted:
                 rrdtype: DERIVE
@@ -699,24 +679,6 @@ device_classes:
             height: 100
             width: 500
             miny: 0
-          Load:
-            units: percentage
-            maxy: 100
-            graphpoints:
-              Write:
-                dpName: diskstats_msWriting
-                lineType: AREA
-                stacked: true
-                format: "%5.2lf"
-                rpn: "10,/"
-                colorindex: 0
-              Read:
-                dpName: diskstats_msReading
-                lineType: AREA
-                stacked: true
-                format: "%5.2lf"
-                rpn: "10,/"
-                colorindex: 1
           Activity:
             units: IOPS
             graphpoints:

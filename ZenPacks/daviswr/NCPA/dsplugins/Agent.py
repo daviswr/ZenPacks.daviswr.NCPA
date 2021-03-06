@@ -196,10 +196,6 @@ class Agent(PythonDataSourcePlugin):
                                     item['write_bytes'][0],
                                     item['write_bytes'][1]
                                     ),
-                                'msDoingIO': (item['read_time'][0]
-                                              + item['write_time'][0]),
-                                'msReading': item['read_time'][0],
-                                'msWriting': item['write_time'][0],
                                 'readsCompleted': item['read_count'][0],
                                 'writesCompleted': item['write_count'][0],
                                 }
