@@ -43,8 +43,8 @@ class Agent(PythonDataSourcePlugin):
         ip_addr = config.manageIp or config.id
         # zProperties aren't going to change between datasources
         token = config.datasources[0].params.get('token', '')
-        port = config.datasources[0].params.get('port', 5693)
-        block = config.datasources[0].params.get('bs', 4096)
+        port = int(config.datasources[0].params.get('port', 5693))
+        block = int(config.datasources[0].params.get('bs', 4096))
 
         if not ip_addr:
             LOG.error('%s: No IP address or hostname', config.id)
@@ -119,8 +119,8 @@ class Agent(PythonDataSourcePlugin):
         # Parse through API output and gather useful metrics
         stats = {
             'cpu': dict(),
-            'disk-logical': dict(),
-            'disk-physical': dict(),
+            'disk': dict(),
+            'diskstats': dict(),
             'intf': dict(),
             'ncpa': {None: dict()},
             'processes': dict(),
@@ -141,8 +141,8 @@ class Agent(PythonDataSourcePlugin):
                     )
             # api/disk
             if 'disk' == node_name:
+                src = node_name
                 for subnode_name in node:
-                    src = '-'.join([node_name, subnode_name])
                     subnode = node[subnode_name]
                     # api/disk/logical - FileSystem components
                     if 'logical' == subnode_name:
@@ -153,27 +153,55 @@ class Agent(PythonDataSourcePlugin):
                         for item_name in subnode:
                             comp = prepId(item_name)
                             item = subnode[item_name]
-                            stats[src][comp] = {}
+                            free = ncpaUtil.get_unit_value(
+                                item['free'][0],
+                                item['free'][1]
+                                )
+                            used = ncpaUtil.get_unit_value(
+                                item['used'][0],
+                                item['used'][1]
+                                )
+                            stats[src][comp] = {
+                                'availBlocks': int(free / block),
+                                'dskPercent': item['used_percent'][0],
+                                'free': free,
+                                'used': used,
+                                'usedBlocks': int(used / block),
+                                }
+                            # Windows does not report these metrics
+                            if 'inodes' in item:
+                                inode_pct = item['inodes_used_percent'][0]
+                                stats[src][comp].update({
+                                    'availInodes': item['inodes_free'][0],
+                                    'usedInodes': item['inodes_used'][0],
+                                    'percentInodesUsed': inode_pct,
+                                    'totalInodes': item['inodes'][0],
+                                    })
                     # api/disk/physical - HardDisk components
                     elif 'physical' == subnode_name:
                         LOG.debug(
                             '%s: Processing api/disk/physical',
                             config.id
                             )
+                        src = 'diskstats'
                         for item_name in subnode:
                             comp = prepId(item_name)
                             item = subnode[item_name]
                             stats[src][comp] = {
-                                'read_bytes': ncpaUtil.get_unit_value(
+                                'DiskReadBytesSec': ncpaUtil.get_unit_value(
                                     item['read_bytes'][0],
                                     item['read_bytes'][1]
                                     ),
-                                'read_count': item['read_count'][0],
-                                'write_bytes': ncpaUtil.get_unit_value(
+                                'DiskWriteBytesSec': ncpaUtil.get_unit_value(
                                     item['write_bytes'][0],
                                     item['write_bytes'][1]
                                     ),
-                                'write_count': item['write_count'][0],
+                                'msDoingIO': (item['read_time'][0]
+                                              + item['write_time'][0]),
+                                'msReading': item['read_time'][0],
+                                'msWriting': item['write_time'][0],
+                                'readsCompleted': item['read_count'][0],
+                                'writesCompleted': item['write_count'][0],
                                 }
             # api/interface - IPInterface components
             elif 'interface' == node_name:

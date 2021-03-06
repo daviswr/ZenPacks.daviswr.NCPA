@@ -195,6 +195,7 @@ device_classes:
             plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
+              # api/system/uptime * 100
               sysUpTime: GAUGE
 
           ncpa_response:
@@ -439,35 +440,43 @@ device_classes:
               # mainly for compat with Zenoss.daviswr.Interfaces transforms.
               # Though IF-MIB doesn't have a matching counter set for
               #  *all* packets, regardless of ucast, mcast, bcast
+              # dropin
               ifInDiscards: DERIVE_MIN_0
+              # errin
               ifInErrors:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifInErrors_ifInErrors: "0,+"
+              # bytes_recv
               ifInOctets:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifInOctets_ifInOctets: "0,+"
                   ethTraffic_Receive_Bytes: "0,+"
+              # packets_recv
               ifInPkts:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   intf_ifInPackets: "0,+"
+              # dropout
               ifOutDiscards: DERIVE_MIN_0
+              # errout
               ifOutErrors:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifOutErrors_ifOutErrors: "0,+"
+              # bytes_sent
               ifOutOctets:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifOutOctets_ifOutOctets: "0,+"
                   ethTraffic_Transmit_Bytes: "0,+"
+              # packets_sent
               ifOutPkts:
                 rrdtype: DERIVE
                 rrdmin: 0
@@ -538,37 +547,186 @@ device_classes:
       # /Server/NCPA/FileSystem
       FileSystem:
         targetPythonClass: Products.ZenModel.FileSystem
-
-      # /Server/NCPA/HardDisk
-      HardDisk:
-        targetPythonClass: Products.ZenModel.HardDisk
         datasources:
-          disk-physical:
+          disk:
             type: Python
             plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             eventClass: /Storage
             component: "${here/id}"
             cycletime: 60
             datapoints:
-              read_bytes: DERIVE_MIN_0
-              read_count: DERIVE_MIN_0
-              write_bytes: DERIVE_MIN_0
-              write_count: DERIVE_MIN_0
+              # free / zNcpaFsBlockSize
+              availBlocks:
+                rrdtype: GAUGE
+                aliases:
+                  availBlocks_availBlocks: "0,+"
+              # inodes_free
+              availInodes:
+                rrdtype: GAUGE
+                aliases:
+                  idisk_availableInodes: "0,+"
+              # used_percent
+              dskPercent:
+                rrdtype: GAUGE
+                aliases:
+                  disk_percentUsed: "0,+"
+                  fs__pct: "0,+"
+                  fs_used__pct: "0,+"
+              free:
+                rrdtype: GAUGE
+                aliases:
+                  FreeMegabytes_FreeMegabytes: "1024,/,1024,/"
+              # inodes_used_percent
+              percentInodesUsed:
+                rrdtype: GAUGE
+                aliases:
+                  idisk_percentInodesUsed: "0,+"
+              # inodes
+              totalInodes:
+                rrdtype: GAUGE
+                aliases:
+                  idisk_totalInodes: "0,+"
+              used:
+                rrdtype: GAUGE
+                aliases:
+                  fs_used__bytes: "0,+"
+                  usedfilesystemspace__bytes: "0,+"
+                  usedFilesystemSpace__bytes: "0,+"
+              # used / zNcpaFsBlockSize
+              usedBlocks:
+                rrdtype: GAUGE
+                aliases:
+                  usedBlocks_usedBlocks: "0,+"
+              # inodes_used
+              usedInodes:
+                rrdtype: GAUGE
+                aliases:
+                  idisk_usedInodes: "0,+"
         graphs:
           DEFAULTS:
             height: 100
             width: 500
             miny: 0
+          Utilization:
+            units: percentage
+            maxy: 100
+            graphpoints:
+              Used:
+                dpName: disk_dskPercent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+          Usage:
+            units: bytes
+            graphpoints:
+              Used:
+                dpName: disk_used
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Free:
+                dpName: disk_free
+                lineType: AREA
+                stacked: true
+                color: cccccc
+          Inode Utilization:
+            units: percentage
+            maxy: 100
+            graphpoints:
+              Used:
+                dpName: disk_percentInodesUsed
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+
+      # /Server/NCPA/HardDisk
+      HardDisk:
+        targetPythonClass: Products.ZenModel.HardDisk
+        datasources:
+          diskstats:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
+            eventClass: /Storage
+            component: "${here/id}"
+            cycletime: 60
+            datapoints:
+              # read_bytes
+              DiskReadBytesSec:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  hd_diskreadbytes__sec: "0,+"
+              # write_bytes
+              DiskWriteBytesSec:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  hd_diskwritebytes__sec: "0,+"
+              # read_time + write_time
+              msDoingIO:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  disk_busy__pct: "10,/"
+              # read_time
+              msReading:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  disk_read_time__pct: "10,/"
+                  hd_diskreadtime: "0,+"
+              # write_time
+              msWriting:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  disk_write_time__pct: "10,/"
+                  hd_diskwritetime: "0,+"
+              # read_count
+              readsCompleted:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  disk_reads__persec: "0,+"
+              # write_count
+              writesCompleted:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  disk_writes__persec: "0,+"
+        graphs:
+          DEFAULTS:
+            height: 100
+            width: 500
+            miny: 0
+          Load:
+            units: percentage
+            maxy: 100
+            graphpoints:
+              Write:
+                dpName: diskstats_msWriting
+                lineType: AREA
+                stacked: true
+                format: "%5.2lf"
+                rpn: "10,/"
+                colorindex: 0
+              Read:
+                dpName: diskstats_msReading
+                lineType: AREA
+                stacked: true
+                format: "%5.2lf"
+                rpn: "10,/"
+                colorindex: 1
           Activity:
             units: IOPS
             graphpoints:
               Write:
-                dpName: disk-physical_write_count
+                dpName: diskstats_writesCompleted
                 lineType: AREA
                 stacked: true
                 colorindex: 0
               Read:
-                dpName: disk-physical_read_count
+                dpName: diskstats_readsCompleted
                 lineType: LINE
                 lineWidth: 2
                 colorindex: 1
@@ -577,12 +735,12 @@ device_classes:
             base: true
             graphpoints:
               Write:
-                dpName: disk-physical_write_bytes
+                dpName: diskstats_DiskWriteBytesSec
                 lineType: AREA
                 stacked: true
                 colorindex: 0
               Read:
-                dpName: disk-physical_read_bytes
+                dpName: diskstats_DiskReadBytesSec
                 lineType: LINE
                 lineWidth: 2
                 colorindex: 1
@@ -846,6 +1004,71 @@ device_classes:
                 format: "%5.2lf"
                 colorindex: 0
 
+      # /Server/NCPA/Windows/FileSystem
+      FileSystem:
+        targetPythonClass: Products.ZenModel.FileSystem
+        datasources:
+          disk:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
+            eventClass: /Storage
+            component: "${here/id}"
+            cycletime: 60
+            datapoints:
+              # free / zNcpaFsBlockSize
+              availBlocks:
+                rrdtype: GAUGE
+                aliases:
+                  availBlocks_availBlocks: "0,+"
+              # used_percent
+              dskPercent:
+                rrdtype: GAUGE
+                aliases:
+                  disk_percentUsed: "0,+"
+                  fs__pct: "0,+"
+                  fs_used__pct: "0,+"
+              free:
+                rrdtype: GAUGE
+                aliases:
+                  FreeMegabytes_FreeMegabytes: "1024,/,1024,/"
+              used:
+                rrdtype: GAUGE
+                aliases:
+                  fs_used__bytes: "0,+"
+                  usedfilesystemspace__bytes: "0,+"
+                  usedFilesystemSpace__bytes: "0,+"
+              # used / zNcpaFsBlockSize
+              usedBlocks:
+                rrdtype: GAUGE
+                aliases:
+                  usedBlocks_usedBlocks: "0,+"
+        graphs:
+          DEFAULTS:
+            height: 100
+            width: 500
+            miny: 0
+          Utilization:
+            units: percentage
+            maxy: 100
+            graphpoints:
+              Used:
+                dpName: disk_dskPercent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+          Usage:
+            units: bytes
+            graphpoints:
+              Used:
+                dpName: disk_used
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Free:
+                dpName: disk_free
+                lineType: AREA
+                stacked: true
+                color: cccccc
 
 process_class_organizers:
   NCPA:
