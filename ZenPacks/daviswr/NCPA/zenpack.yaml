@@ -79,7 +79,8 @@ device_classes:
       zFileSystemMapIgnoreTypes:
         - cdrom
       # Default /Server/Linux + ^nvme\d+n\d+$
-      zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+$"
+      zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|
+^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+$"
       zIcon: /zport/dmd/img/icons/server.png
       zNcpaServicesExpectedRunning:
         - ncpa_listener
@@ -123,6 +124,7 @@ device_classes:
       # /Server/NCPA/Device
       Device:
         targetPythonClass: Products.ZenModel.Device
+        description: Information about the system that NCPA is running on
         datasources:
           ncpa:
             type: Python
@@ -138,6 +140,7 @@ device_classes:
                   cpu_cpu: "0,+"
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
+                  ssCpuIdle_ssCpuIdle: "-1,*"
               mem_rss: GAUGE
               mem_vms: GAUGE
               memory_available:
@@ -165,6 +168,24 @@ device_classes:
                   mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
                   usedMemory: "0,+"
+              proc_cpu: GAUGE
+              proc_mem: GAUGE
+              processes: GAUGE
+              ssCpuRawIdle:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawIdle_ssCpuRawIdle: "0,+"
+              ssCpuRawSystem:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawSystem_ssCpuRawSystem: "0,+"
+              ssCpuRawUser:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawUser_ssCpuRawUser: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
@@ -185,9 +206,6 @@ device_classes:
                 aliases:
                   swapUsed__bytes: "0,+"
                   usedSwap: "0,+"
-              proc_cpu: GAUGE
-              proc_mem: GAUGE
-              processes: GAUGE
               users: GAUGE
 
           sysUpTime:
@@ -400,6 +418,8 @@ device_classes:
       # /Server/NCPA/CPU
       CPU:
         targetPythonClass: Products.ZenModel.CPU
+        description: "Information on the currently used system-wide percentage,
+ also the idle, user, and system time"
         datasources:
           cpu:
             type: Python
@@ -408,7 +428,10 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
+              idle: DERIVE_MIN_0
               percent: GAUGE
+              system: DERIVE_MIN_0
+              user: DERIVE_MIN_0
         graphs:
           DEFAULTS:
             height: 100
@@ -427,6 +450,8 @@ device_classes:
       # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
         targetPythonClass: Products.ZenModel.IpInterface
+        description: "Counters for each of the available network interfaces that
+ exist"
         datasources:
           # Emulate ZenCommand-based datasource name
           intf:
@@ -547,6 +572,7 @@ device_classes:
       # /Server/NCPA/FileSystem
       FileSystem:
         targetPythonClass: Products.ZenModel.FileSystem
+        description: Information on each mounted disk partition
         datasources:
           disk:
             type: Python
@@ -642,6 +668,7 @@ device_classes:
       # /Server/NCPA/HardDisk
       HardDisk:
         targetPythonClass: Products.ZenModel.HardDisk
+        description: Each physical drive's hardware stats
         datasources:
           diskstats:
             type: Python
@@ -662,6 +689,20 @@ device_classes:
                 rrdmin: 0
                 aliases:
                   hd_diskwritebytes__sec: "0,+"
+              # read_time
+              msReading:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  # Convert to timeticks spent reading per unit time?
+                  disk_read_time__pct: "10,/"
+              # write_time
+              msWriting:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  # Convert to timeticks spent writing per unit time?
+                  disk_write_time__pct: "10,/"
               # read_count
               readsCompleted:
                 rrdtype: DERIVE
@@ -710,10 +751,13 @@ device_classes:
       # /Server/NCPA/OSProcess
       OSProcess:
         targetPythonClass: Products.ZenModel.OSProcess
+        description: "Data about the process such as memory, CPU usage, and
+ binary name"
 
       # /Server/NCPA/Service
       Service:
         targetPythonClass: ZenPacks.daviswr.NCPA.NcpaService
+        description: Services' current state
         datasources:
           services:
             type: Python
@@ -761,6 +805,7 @@ device_classes:
       # Windows does not reported swapped_in or swapped_out metrics
       Device:
         targetPythonClass: Products.ZenModel.Device
+        description: Information about the system that NCPA is running on
         datasources:
           ncpa:
             type: Python
@@ -773,6 +818,7 @@ device_classes:
                   cpu_cpu: "0,+"
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
+                  ssCpuIdle_ssCpuIdle: "-1,*"
               mem_rss: GAUGE
               mem_vms: GAUGE
               memory_available:
@@ -800,6 +846,24 @@ device_classes:
                   mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
                   usedMemory: "0,+"
+              proc_cpu: GAUGE
+              proc_mem: GAUGE
+              processes: GAUGE
+              ssCpuRawIdle:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawIdle_ssCpuRawIdle: "0,+"
+              ssCpuRawSystem:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawSystem_ssCpuRawSystem: "0,+"
+              ssCpuRawUser:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawUser_ssCpuRawUser: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
@@ -818,9 +882,6 @@ device_classes:
                 aliases:
                   swapUsed__bytes: "0,+"
                   usedSwap: "0,+"
-              proc_cpu: GAUGE
-              proc_mem: GAUGE
-              processes: GAUGE
               users: GAUGE
 
           sysUpTime:
@@ -969,6 +1030,7 @@ device_classes:
       # /Server/NCPA/Windows/FileSystem
       FileSystem:
         targetPythonClass: Products.ZenModel.FileSystem
+        description: Information on each mounted disk partition
         datasources:
           disk:
             type: Python

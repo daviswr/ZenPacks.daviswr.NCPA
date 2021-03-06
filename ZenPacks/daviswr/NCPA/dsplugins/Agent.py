@@ -57,15 +57,23 @@ class Agent(PythonDataSourcePlugin):
 
         root_url = ncpaUtil.build_url(host=ip_addr, port=port, token=token)
 
-        # CPU percentage endpoint is returned as empty list by root endpoint
-        cpu_url = ncpaUtil.build_url(
+        cpu_avg_url = ncpaUtil.build_url(
+            host=ip_addr,
+            port=port,
+            token=token,
+            endpoint='cpu',
+            params={'aggregate': 'avg'}
+            )
+
+        # CPU percentage endpoint is returned as empty list by parent endpoints
+        cpu_pct_url = ncpaUtil.build_url(
             host=ip_addr,
             port=port,
             token=token,
             endpoint='cpu/percent',
             )
 
-        cpu_avg_url = ncpaUtil.build_url(
+        cpu_avg_pct_url = ncpaUtil.build_url(
             host=ip_addr,
             port=port,
             token=token,
@@ -96,13 +104,19 @@ class Agent(PythonDataSourcePlugin):
             # Move everything out from under the 'root' key
             output = output.get('root', output)
 
-            response = yield getPage(cpu_url, method='GET')
-            # Should give us a new 'percent' key not under 'cpu'
-            output.update(json.loads(response))
-
             response = yield getPage(cpu_avg_url, method='GET')
-            # Should give us avg/percent
+            # Should give us avg/cpu
             output['avg'] = json.loads(response)
+
+            response = yield getPage(cpu_pct_url, method='GET')
+            if 'cpu' not in output:
+                output['cpu'] = dict()
+            output['cpu'].update(json.loads(response))
+
+            response = yield getPage(cpu_avg_pct_url, method='GET')
+            if 'cpu' not in output['avg']:
+                output['avg']['cpu'] = dict()
+            output['avg']['cpu'].update(json.loads(response))
 
             response = yield getPage(proc_url, method='GET')
             output.update(json.loads(response))
@@ -133,14 +147,32 @@ class Agent(PythonDataSourcePlugin):
             src = 'ncpa'
             comp = None
 
-            # api/cpu/percent, aggregate=avg
+            # api/cpu & api/cpu/percent, aggregate=avg
             if 'avg' == node_name:
-                LOG.debug('%s: Processing agg api/cpu/percent', config.id)
-                stats[src][comp]['cpu_percent'] = float(
-                    node['percent'][0][0]
-                    )
+                LOG.debug('%s: Processing avg api/cpu', config.id)
+                subnode = node['cpu']
+                # Convert millisecond values to timeticks
+                stats[src][comp].update({
+                    'cpu_percent': float(subnode['percent'][0][0]),
+                    'ssCpuRawIdle': int(subnode['idle'][0][0]) / 10,
+                    'ssCpuRawSystem': int(subnode['system'][0][0]) / 10,
+                    'ssCpuRawUser': int(subnode['user'][0][0]) / 10,
+                    })
+            # api/cpu - CPU components
+            elif 'cpu' == node_name:
+                LOG.debug('%s: Processing api/cpu', config.id)
+                src = 'cpu'
+                for item_idx in range(0, len(node['idle'][0])):
+                    comp = prepId(str(item_idx))
+                    # Convert millisecond values to timeticks
+                    stats[src][comp] = {
+                        'idle': int(node['idle'][0][item_idx]) / 10,
+                        'percent': float(node['percent'][0][item_idx]),
+                        'system': int(node['system'][0][item_idx]) / 10,
+                        'user': int(node['user'][0][item_idx]) / 10,
+                        }
             # api/disk
-            if 'disk' == node_name:
+            elif 'disk' == node_name:
                 src = node_name
                 for subnode_name in node:
                     subnode = node[subnode_name]
@@ -196,6 +228,8 @@ class Agent(PythonDataSourcePlugin):
                                     item['write_bytes'][0],
                                     item['write_bytes'][1]
                                     ),
+                                'msReading': item['read_time'][0],
+                                'msWriting': item['write_time'][0],
                                 'readsCompleted': item['read_count'][0],
                                 'writesCompleted': item['write_count'][0],
                                 }
@@ -284,13 +318,13 @@ class Agent(PythonDataSourcePlugin):
                                 ),
                             })
             # api/cpu/percent - CPU components
-            elif 'percent' == node_name:
-                LOG.debug('%s: Processing api/cpu/percent', config.id)
-                src = 'cpu'
-                for item_name in range(0, len(node[0])):
-                    comp = prepId(str(item_name))
-                    item = node[0][item_name]
-                    stats[src][comp] = {'percent': float(item)}
+            # elif 'percent' == node_name:
+            #     LOG.debug('%s: Processing api/cpu/percent', config.id)
+            #     src = 'cpu'
+            #     for item_name in range(0, len(node[0])):
+            #         comp = prepId(str(item_name))
+            #         item = node[0][item_name]
+            #         stats[src][comp] = {'percent': float(item)}
             # api/processes
             elif 'processes' == node_name:
                 LOG.debug('%s: Processing api/processes', config.id)
