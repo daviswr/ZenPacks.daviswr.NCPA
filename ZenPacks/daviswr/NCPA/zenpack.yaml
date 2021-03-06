@@ -246,11 +246,13 @@ device_classes:
                 dpName: ncpa_proc_cpu
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
               Average:
                 dpName: ncpa_cpu_percent
                 lineType: LINE
                 lineWidth: 2
+                format: "%5.2lf"
                 colorindex: 0
           Memory and Swap Summary:
             units: percentage
@@ -259,11 +261,13 @@ device_classes:
                 dpName: ncpa_memory_percent
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
               Swap:
                 dpName: ncpa_swap_percent
                 lineType: LINE
                 lineWidth: 2
+                format: "%5.2lf"
                 colorindex: 1
               Resident Set:
                 dpName: ncpa_proc_mem
@@ -445,6 +449,7 @@ device_classes:
                 dpName: cpu_percent
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
 
       # /Server/NCPA/ethernetCsmacd
@@ -641,6 +646,7 @@ device_classes:
                 dpName: disk_dskPercent
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
           Usage:
             units: bytes
@@ -663,6 +669,7 @@ device_classes:
                 dpName: disk_percentInodesUsed
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
 
       # /Server/NCPA/HardDisk
@@ -921,11 +928,13 @@ device_classes:
                 dpName: ncpa_proc_cpu
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
               Average:
                 dpName: ncpa_cpu_percent
                 lineType: LINE
                 lineWidth: 2
+                format: "%5.2lf"
                 colorindex: 0
           Memory and Swap Summary:
             units: percentage
@@ -934,16 +943,19 @@ device_classes:
                 dpName: ncpa_memory_percent
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
               Swap:
                 dpName: ncpa_swap_percent
                 lineType: LINE
                 lineWidth: 2
+                format: "%5.2lf"
                 colorindex: 1
               Resident Set:
                 dpName: ncpa_proc_mem
                 lineType: LINE
                 lineWidth: 2
+                format: "%5.2lf"
                 colorindex: 2
           Memory Utilization:
             units: bytes
@@ -1079,6 +1091,7 @@ device_classes:
                 dpName: disk_dskPercent
                 lineType: AREA
                 stacked: true
+                format: "%5.2lf"
                 colorindex: 0
           Usage:
             units: bytes
