@@ -131,6 +131,7 @@ device_classes:
             plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
+              # api/cpu/percent
               cpu_percent:
                 rrdtype: GAUGE
                 aliases:
@@ -141,8 +142,11 @@ device_classes:
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
                   ssCpuIdle_ssCpuIdle: "-1,*"
+              # api/processes/mem_rss sum
               mem_rss: GAUGE
+              # api/processes/mem_vms sum
               mem_vms: GAUGE
+              # api/memory/virtual
               memory_available:
                 rrdtype: GAUGE
                 aliases:
@@ -168,24 +172,31 @@ device_classes:
                   mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
                   usedMemory: "0,+"
+              # api/processes/cpu_percent sum
               proc_cpu: GAUGE
+              # api/processes/mem_percent sum
               proc_mem: GAUGE
+              # api/processes count
               processes: GAUGE
+              # api/cpu/idle / 10
               ssCpuRawIdle:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawIdle_ssCpuRawIdle: "0,+"
+              # api/cpu/system / 10
               ssCpuRawSystem:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawSystem_ssCpuRawSystem: "0,+"
+              # api/cpu/user / 10
               ssCpuRawUser:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawUser_ssCpuRawUser: "0,+"
+              # api/memory/swap
               swap_free:
                 rrdtype: GAUGE
                 aliases:
@@ -206,6 +217,7 @@ device_classes:
                 aliases:
                   swapUsed__bytes: "0,+"
                   usedSwap: "0,+"
+              # api/user/count
               users: GAUGE
 
           sysUpTime:
@@ -300,18 +312,14 @@ device_classes:
               DEFAULTS:
                 lineType: AREA
                 stacked: true
-              Resident Set:
-                dpName: ncpa_mem_rss
+              In Use:
+                dpName: ncpa_memory_available
+                # Total - Available
+                rpn: "-1,*,${here/hw/totalMemory},+"
                 colorindex: 0
               Available:
                 dpName: ncpa_memory_available
                 color: cccccc
-              Virtual Memory:
-                dpName: ncpa_mem_vms
-                lineType: LINE
-                lineWidth: 2
-                stacked: false
-                colorindex: 1
           Swap Utilization:
             units: bytes
             base: true
@@ -957,6 +965,7 @@ device_classes:
                 lineWidth: 2
                 format: "%5.2lf"
                 colorindex: 2
+          # Free = Available on Windows
           Memory Utilization:
             units: bytes
             base: true
@@ -967,34 +976,9 @@ device_classes:
               Used:
                 dpName: ncpa_memory_used
                 colorindex: 0
-              Buffers-Cache:
-                dpName: ncpa_memory_free
-                # Total - (Free + Used)
-                rpn: "Used,+,-1,*,${here/hw/totalMemory},+"
-                colorindex: 1
-                legend: "Buffers/Cache"
               Free:
                 dpName: ncpa_memory_free
                 color: cccccc
-          Memory Allocation:
-            units: bytes
-            base: true
-            graphpoints:
-              DEFAULTS:
-                lineType: AREA
-                stacked: true
-              Resident Set:
-                dpName: ncpa_mem_rss
-                colorindex: 0
-              Available:
-                dpName: ncpa_memory_available
-                color: cccccc
-              Virtual Memory:
-                dpName: ncpa_mem_vms
-                lineType: LINE
-                lineWidth: 2
-                stacked: false
-                colorindex: 1
           Swap Utilization:
             units: bytes
             base: true
