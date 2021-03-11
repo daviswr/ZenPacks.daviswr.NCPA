@@ -569,12 +569,12 @@ device_classes:
             units: packets/sec
             graphpoints:
               Inbound:
-                dpName: intf_ifInPkts
+                dpName: intf_ifInPackets
                 lineType: AREA
                 stacked: true
                 colorindex: 0
               Outbound:
-                dpName: intf_ifOutPkts
+                dpName: intf_ifOutPackets
                 lineType: LINE
                 lineWidth: 1
                 colorindex: 1
@@ -732,14 +732,12 @@ device_classes:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
-                  # Convert to timeticks spent reading per unit time?
                   disk_read_time__pct: "10,/"
               # write_time
               msWriting:
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
-                  # Convert to timeticks spent writing per unit time?
                   disk_write_time__pct: "10,/"
               # read_count
               readsCompleted:
@@ -758,6 +756,21 @@ device_classes:
             height: 100
             width: 500
             miny: 0
+          Load:
+            units: percentage
+            maxy: 100
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+                format: "%5.2lf"
+                rpn: "10,/"
+              Write:
+                dpName: diskstats_msWriting
+                colorindex: 0
+              Read:
+                dpName: diskstats_msReading
+                colorindex: 1
           Activity:
             units: IOPS
             graphpoints:
