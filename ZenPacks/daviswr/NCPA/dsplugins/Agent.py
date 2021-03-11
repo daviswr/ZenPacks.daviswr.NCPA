@@ -151,12 +151,11 @@ class Agent(PythonDataSourcePlugin):
             if 'avg' == node_name:
                 LOG.debug('%s: Processing avg api/cpu', config.id)
                 subnode = node['cpu']
-                # Convert millisecond values to timeticks
                 stats[src][comp].update({
+                    'cpu_idle': int(subnode['idle'][0][0]),
                     'cpu_percent': float(subnode['percent'][0][0]),
-                    'ssCpuRawIdle': int(subnode['idle'][0][0]) / 10,
-                    'ssCpuRawSystem': int(subnode['system'][0][0]) / 10,
-                    'ssCpuRawUser': int(subnode['user'][0][0]) / 10,
+                    'cpu_system': int(subnode['system'][0][0]),
+                    'cpu_user': int(subnode['user'][0][0]),
                     })
             # api/cpu - CPU components
             elif 'cpu' == node_name:
@@ -164,12 +163,11 @@ class Agent(PythonDataSourcePlugin):
                 src = 'cpu'
                 for item_idx in range(0, len(node['idle'][0])):
                     comp = prepId(str(item_idx))
-                    # Convert millisecond values to timeticks
                     stats[src][comp] = {
-                        'idle': int(node['idle'][0][item_idx]) / 10,
+                        'idle': int(node['idle'][0][item_idx]),
                         'percent': float(node['percent'][0][item_idx]),
-                        'system': int(node['system'][0][item_idx]) / 10,
-                        'user': int(node['user'][0][item_idx]) / 10,
+                        'system': int(node['system'][0][item_idx]),
+                        'user': int(node['user'][0][item_idx]),
                         }
             # api/disk
             elif 'disk' == node_name:
@@ -242,9 +240,7 @@ class Agent(PythonDataSourcePlugin):
                     comp = prepId(item_name)
                     item = node[item_name]
                     stats[src][comp] = {
-                        # Name the datapoints after the
-                        # IF-MIB::ifEntry counterparts.
-                        # Mainly for compat with Zenoss.daviswr.Interfaces
+                        # Emulate ZenCommand-based datapoint names
                         'ifInOctets': ncpaUtil.get_unit_value(
                             item['bytes_recv'][0],
                             item['bytes_recv'][1]
@@ -257,10 +253,8 @@ class Agent(PythonDataSourcePlugin):
                         'ifOutDiscards': item['dropout'][0],
                         'ifInErrors': item['errin'][0],
                         'ifOutErrors': item['errout'][0],
-                        # IF-MIB doesn't have matching counters for *all*
-                        # packets, regardless of ucast, mcast, bcast
-                        'ifInPkts': item['packets_recv'][0],
-                        'ifOutPkts': item['packets_sent'][0],
+                        'ifInPackets': item['packets_recv'][0],
+                        'ifOutPackets': item['packets_sent'][0],
                         }
             # api/memory
             elif 'memory' == node_name:
@@ -328,8 +322,6 @@ class Agent(PythonDataSourcePlugin):
                 stats[src][comp]['processes'] = len(node)
                 # processes node is a list, rather than a dict
                 for item in node:
-                    src = 'ncpa'
-                    comp = None
                     stats[src][comp]['mem_rss'] += ncpaUtil.get_unit_value(
                         item['mem_rss'][0],
                         item['mem_rss'][1],
@@ -347,8 +339,6 @@ class Agent(PythonDataSourcePlugin):
                         cpu_pct = item.get('cpu_percent', [0.0, ''])[0]
                         stats[src][comp]['proc_cpu'] += cpu_pct
 
-                    # OSProcess component metrics
-                    src = node_name
             # api/services - NcpaService components
             elif 'services' == node_name:
                 LOG.debug('%s: Processing api/services', config.id)

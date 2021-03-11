@@ -131,7 +131,11 @@ device_classes:
             plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
-              # api/cpu/percent
+              cpu_idle:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawIdle_ssCpuRawIdle: "10,/"
               cpu_percent:
                 rrdtype: GAUGE
                 aliases:
@@ -142,6 +146,16 @@ device_classes:
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
                   ssCpuIdle_ssCpuIdle: "-1,*"
+              cpu_system:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawSystem_ssCpuRawSystem: "10,/"
+              cpu_user:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawUser_ssCpuRawUser: "10,/"
               # api/processes/mem_rss sum
               mem_rss: GAUGE
               # api/processes/mem_vms sum
@@ -178,24 +192,6 @@ device_classes:
               proc_mem: GAUGE
               # api/processes count
               processes: GAUGE
-              # api/cpu/idle / 10
-              ssCpuRawIdle:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  ssCpuRawIdle_ssCpuRawIdle: "0,+"
-              # api/cpu/system / 10
-              ssCpuRawSystem:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  ssCpuRawSystem_ssCpuRawSystem: "0,+"
-              # api/cpu/user / 10
-              ssCpuRawUser:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  ssCpuRawUser_ssCpuRawUser: "0,+"
               # api/memory/swap
               swap_free:
                 rrdtype: GAUGE
@@ -253,19 +249,36 @@ device_classes:
             miny: 0
           CPU Utilization:
             units: percentage
+            maxy: 100
             graphpoints:
+              DEFAULTS:
+                format: "%5.2lf"
               Utilization:
-                dpName: ncpa_proc_cpu
+                dpName: ncpa_cpu_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Average:
+                dpName: ncpa_cpu_idle
+                lineType: LINE
+                lineWidth: 1
+                # 100 % - idle %
+                rpn: "-100,*,100,+"
+                colorindex: 1
+          CPU Time:
+            units: percent
+            graphpoints:
+              DEFAULTS:
                 lineType: AREA
                 stacked: true
                 format: "%5.2lf"
+                rpn: "100,*"
+              System:
+                dpName: ncpa_cpu_system
                 colorindex: 0
-              Average:
-                dpName: ncpa_cpu_percent
-                lineType: LINE
-                lineWidth: 2
-                format: "%5.2lf"
-                colorindex: 0
+              User:
+                dpName: ncpa_cpu_user
+                colorindex: 1
           Memory and Swap Summary:
             units: percentage
             graphpoints:
@@ -453,12 +466,34 @@ device_classes:
             units: percentage
             maxy: 100
             graphpoints:
+              DEFAULTS:
+                format: "%5.2lf"
               Utilization:
                 dpName: cpu_percent
                 lineType: AREA
                 stacked: true
-                format: "%5.2lf"
                 colorindex: 0
+              Average:
+                dpName: cpu_idle
+                lineType: LINE
+                lineWidth: 1
+                # 100 % - idle %
+                rpn: "-100,*,100,+"
+                colorindex: 1
+          CPU Time:
+            units: percent
+            graphpoints:
+              DEFAULTS:
+                lineType: AREA
+                stacked: true
+                format: "%5.2lf"
+                rpn: "100,*"
+              System:
+                dpName: cpu_system
+                colorindex: 0
+              User:
+                dpName: cpu_user
+                colorindex: 1
 
       # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
@@ -474,11 +509,7 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
-              # Name the datapoints after the IF-MIB::ifEntry counterparts,
-              # mainly for compat with Zenoss.daviswr.Interfaces transforms.
-              # Though IF-MIB doesn't have a matching counter set for
-              #  *all* packets, regardless of ucast, mcast, bcast
-              # dropin
+              # Emulate ZenCommand-based datapoint names
               ifInDiscards: DERIVE_MIN_0
               # errin
               ifInErrors:
@@ -494,11 +525,7 @@ device_classes:
                   ifInOctets_ifInOctets: "0,+"
                   ethTraffic_Receive_Bytes: "0,+"
               # packets_recv
-              ifInPkts:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  intf_ifInPackets: "0,+"
+              ifInPackets: DERIVE_MIN_0
               # dropout
               ifOutDiscards: DERIVE_MIN_0
               # errout
@@ -515,11 +542,7 @@ device_classes:
                   ifOutOctets_ifOutOctets: "0,+"
                   ethTraffic_Transmit_Bytes: "0,+"
               # packets_sent
-              ifOutPkts:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  intf_ifOutPackets: "0,+"
+              ifOutPackets: DERIVE_MIN_0
               # NCPA does not report status similarly to IF-MIB::ifOperStatus
         graphs:
           DEFAULTS:
@@ -812,7 +835,7 @@ device_classes:
         - MSSQL$SQLEXPRESS
         - WinDefend
         - MSSQLTELEMETRY
-        - SQLTELEMETRY$SQLEXPRES
+        - SQLTELEMETRY$SQLEXPRESS
         - WAS
         - W3SVC
     templates:
@@ -827,6 +850,11 @@ device_classes:
             plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Agent
             cycletime: 60
             datapoints:
+              cpu_idle:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawIdle_ssCpuRawIdle: "10,/"
               cpu_percent:
                 rrdtype: GAUGE
                 aliases:
@@ -834,6 +862,16 @@ device_classes:
                   cpu_pct: "0,+"
                   cpu__pct: "0,+"
                   ssCpuIdle_ssCpuIdle: "-1,*"
+              cpu_system:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawSystem_ssCpuRawSystem: "10,/"
+              cpu_user:
+                rrdtype: DERIVE
+                rrdmin: 0
+                aliases:
+                  ssCpuRawUser_ssCpuRawUser: "10,/"
               mem_rss: GAUGE
               mem_vms: GAUGE
               memory_available:
@@ -864,21 +902,6 @@ device_classes:
               proc_cpu: GAUGE
               proc_mem: GAUGE
               processes: GAUGE
-              ssCpuRawIdle:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  ssCpuRawIdle_ssCpuRawIdle: "0,+"
-              ssCpuRawSystem:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  ssCpuRawSystem_ssCpuRawSystem: "0,+"
-              ssCpuRawUser:
-                rrdtype: DERIVE
-                rrdmin: 0
-                aliases:
-                  ssCpuRawUser_ssCpuRawUser: "0,+"
               swap_free:
                 rrdtype: GAUGE
                 aliases:
@@ -931,19 +954,36 @@ device_classes:
             miny: 0
           CPU Utilization:
             units: percentage
+            maxy: 100
             graphpoints:
+              DEFAULTS:
+                format: "%5.2lf"
               Utilization:
-                dpName: ncpa_proc_cpu
+                dpName: ncpa_cpu_percent
+                lineType: AREA
+                stacked: true
+                colorindex: 0
+              Average:
+                dpName: ncpa_cpu_idle
+                lineType: LINE
+                lineWidth: 1
+                # 100 % - idle %
+                rpn: "-100,*,100,+"
+                colorindex: 1
+          CPU Time:
+            units: percent
+            graphpoints:
+              DEFAULTS:
                 lineType: AREA
                 stacked: true
                 format: "%5.2lf"
+                rpn: "100,*"
+              System:
+                dpName: ncpa_cpu_system
                 colorindex: 0
-              Average:
-                dpName: ncpa_cpu_percent
-                lineType: LINE
-                lineWidth: 2
-                format: "%5.2lf"
-                colorindex: 0
+              User:
+                dpName: ncpa_cpu_user
+                colorindex: 1
           Memory and Swap Summary:
             units: percentage
             graphpoints:
