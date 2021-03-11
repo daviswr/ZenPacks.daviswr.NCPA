@@ -132,11 +132,13 @@ device_classes:
             cycletime: 60
             datapoints:
               cpu_idle:
+                description: CPU time spent doing nothing
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawIdle_ssCpuRawIdle: "10,/"
               cpu_percent:
+                description: Current system-wide CPU utilization as a percentage
                 rrdtype: GAUGE
                 aliases:
                   # Compatibility with Zenoss CPU Utilization report
@@ -147,32 +149,41 @@ device_classes:
                   cpu__pct: "0,+"
                   ssCpuIdle_ssCpuIdle: "-1,*"
               cpu_system:
+                description: CPU time spent by processes executing in kernel mode
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawSystem_ssCpuRawSystem: "10,/"
               cpu_user:
+                description: CPU time spent by normal processes executing in user mode
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawUser_ssCpuRawUser: "10,/"
               # api/processes/mem_rss sum
-              mem_rss: GAUGE
+              mem_rss:
+                description: Non-swapped physical memory processes have used
+                rrdtype: GAUGE
               # api/processes/mem_vms sum
-              mem_vms: GAUGE
+              mem_vms:
+                description: Virtual memory used by processes
+                rrdtype: GAUGE
               # api/memory/virtual
               memory_available:
+                description: Memory that can be given instantly to processes
                 rrdtype: GAUGE
                 aliases:
                   mem_memAvailReal: "0,+"
                   memAvailReal_memAvailReal: "0,+"
                   memoryAvailable__bytes: "0,+"
               memory_free:
+                description: Memory not being used at all that is readily available
                 rrdtype: GAUGE
                 aliases:
                   freeMemory: "0,+"
                   memoryFree__bytes: "0,+"
               memory_percent:
+                description: Memory percentage used
                 rrdtype: GAUGE
                 aliases:
                   mem_mem: "0,+"
@@ -181,19 +192,27 @@ device_classes:
                   mem_percentMemUsed: "0,+"
                   mem_MemUsedPercent: "0,+"
               memory_used:
+                description: Memory used, calculated differently depending on the platform
                 rrdtype: GAUGE
                 aliases:
                   mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
                   usedMemory: "0,+"
               # api/processes/cpu_percent sum
-              proc_cpu: GAUGE
+              proc_cpu:
+                description: Process CPU utilization as a percentage
+                rrdtype: GAUGE
               # api/processes/mem_percent sum
-              proc_mem: GAUGE
+              proc_mem:
+                description: Process memory utilization as a percentage
+                rrdtype: GAUGE
               # api/processes count
-              processes: GAUGE
+              processes:
+                description: Current running processes
+                rrdtype: GAUGE
               # api/memory/swap
               swap_free:
+                description: Free swap memory
                 rrdtype: GAUGE
                 aliases:
                   freeSwap: "0,+"
@@ -201,20 +220,30 @@ device_classes:
                   mem_SwapFree: "0,+"
                   memAvailSwap_memAvailSwap: "0,+"
                   swapFree__bytes: "0,+"
-              swap_in: DERIVE_MIN_0
-              swap_out: DERIVE_MIN_0
+              swap_in:
+                description: Bytes the system has swapped in from disk
+                rrdtype: DERIVE
+                rrdmin: 0
+              swap_out:
+                description: Bytes the system has swapped out from disk
+                rrdtype: DERIVE
+                rrdmin: 0
               swap_percent:
+                description: Swap percentage used
                 rrdtype: GAUGE
                 aliases:
                   swap_pct: "0,+"
                   swap__pct: "0,+"
               swap_used:
+                description: Used swap memory
                 rrdtype: GAUGE
                 aliases:
                   swapUsed__bytes: "0,+"
                   usedSwap: "0,+"
               # api/user/count
-              users: GAUGE
+              users:
+                description: Users currently connected on the system
+                rrdtype: GAUGE
 
           sysUpTime:
             type: Python
@@ -498,8 +527,7 @@ device_classes:
       # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
         targetPythonClass: Products.ZenModel.IpInterface
-        description: "Counters for each of the available network interfaces that
- exist"
+        description: Counters for each of the available network interfaces
         datasources:
           # Emulate ZenCommand-based datasource name
           intf:
@@ -510,39 +538,55 @@ device_classes:
             cycletime: 60
             datapoints:
               # Emulate ZenCommand-based datapoint names
-              ifInDiscards: DERIVE_MIN_0
+              ifInDiscards:
+                description: Incoming packets which were dropped
+                rrdtype: DERIVE
+                rrdmin: 0
               # errin
               ifInErrors:
+                description: Errors while receiving
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifInErrors_ifInErrors: "0,+"
               # bytes_recv
               ifInOctets:
+                description: Bytes received
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifInOctets_ifInOctets: "0,+"
                   ethTraffic_Receive_Bytes: "0,+"
               # packets_recv
-              ifInPackets: DERIVE_MIN_0
+              ifInPackets:
+                description: Packets received
+                rrdtype: DERIVE
+                rrdmin: 0
               # dropout
-              ifOutDiscards: DERIVE_MIN_0
+              ifOutDiscards:
+                description: Outgoing packets which were dropped
+                rrdtype: DERIVE
+                rrdmin: 0
               # errout
               ifOutErrors:
+                description: Errors while sending
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifOutErrors_ifOutErrors: "0,+"
               # bytes_sent
               ifOutOctets:
+                description: Bytes sent
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ifOutOctets_ifOutOctets: "0,+"
                   ethTraffic_Transmit_Bytes: "0,+"
               # packets_sent
-              ifOutPackets: DERIVE_MIN_0
+              ifOutPackets:
+                description: Packets sent
+                rrdtype: DERIVE
+                rrdmin: 0
               # NCPA does not report status similarly to IF-MIB::ifOperStatus
         graphs:
           DEFAULTS:
@@ -635,6 +679,7 @@ device_classes:
                   fs__pct: "0,+"
                   fs_used__pct: "0,+"
               free:
+                description: Partition free space
                 rrdtype: GAUGE
                 aliases:
                   FreeMegabytes_FreeMegabytes: "1024,/,1024,/"
@@ -649,6 +694,7 @@ device_classes:
                 aliases:
                   idisk_totalInodes: "0,+"
               used:
+                description: Partition used space
                 rrdtype: GAUGE
                 aliases:
                   fs_used__bytes: "0,+"
@@ -717,36 +763,42 @@ device_classes:
             datapoints:
               # read_bytes
               DiskReadBytesSec:
+                description: Number of bytes read
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   hd_diskreadbytes__sec: "0,+"
               # write_bytes
               DiskWriteBytesSec:
+                description: Number of bytes written
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   hd_diskwritebytes__sec: "0,+"
               # read_time
               msReading:
+                description: Time spent reading from disk
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   disk_read_time__pct: "10,/"
               # write_time
               msWriting:
+                description: Time spent writing to disk
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   disk_write_time__pct: "10,/"
               # read_count
               readsCompleted:
+                description: Number of reads
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   disk_reads__persec: "0,+"
               # write_count
               writesCompleted:
+                description: Number of writes
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
@@ -802,8 +854,7 @@ device_classes:
       # /Server/NCPA/OSProcess
       OSProcess:
         targetPythonClass: Products.ZenModel.OSProcess
-        description: "Data about the process such as memory, CPU usage, and
- binary name"
+        description: Data about the process such as memory, CPU usage, and binary name
 
       # /Server/NCPA/Service
       Service:
@@ -864,11 +915,13 @@ device_classes:
             cycletime: 60
             datapoints:
               cpu_idle:
+                description: CPU time spent doing nothing
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawIdle_ssCpuRawIdle: "10,/"
               cpu_percent:
+                description: Current system-wide CPU utilization as a percentage
                 rrdtype: GAUGE
                 aliases:
                   cpu_cpu: "0,+"
@@ -876,29 +929,38 @@ device_classes:
                   cpu__pct: "0,+"
                   ssCpuIdle_ssCpuIdle: "-1,*"
               cpu_system:
+                description: CPU time spent by processes executing in kernel mode
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawSystem_ssCpuRawSystem: "10,/"
               cpu_user:
+                description: CPU time spent by normal processes executing in user mode
                 rrdtype: DERIVE
                 rrdmin: 0
                 aliases:
                   ssCpuRawUser_ssCpuRawUser: "10,/"
-              mem_rss: GAUGE
-              mem_vms: GAUGE
+              mem_rss:
+                description: Non-swapped physical memory processes have used
+                rrdtype: GAUGE
+              mem_vms:
+                description: Virtual memory used by processes
+                rrdtype: GAUGE
               memory_available:
+                description: Memory that can be given instantly to processes
                 rrdtype: GAUGE
                 aliases:
                   mem_memAvailReal: "0,+"
                   memAvailReal_memAvailReal: "0,+"
                   memoryAvailable__bytes: "0,+"
               memory_free:
+                description: Memory not being used at all that is readily available
                 rrdtype: GAUGE
                 aliases:
                   freeMemory: "0,+"
                   memoryFree__bytes: "0,+"
               memory_percent:
+                description: Memory percentage used
                 rrdtype: GAUGE
                 aliases:
                   mem_mem: "0,+"
@@ -907,15 +969,23 @@ device_classes:
                   mem_percentMemUsed: "0,+"
                   mem_MemUsedPercent: "0,+"
               memory_used:
+                description: Memory used, calculated differently depending on the platform
                 rrdtype: GAUGE
                 aliases:
                   mem_usage: "0,+"
                   memoryUsed__bytes: "0,+"
                   usedMemory: "0,+"
-              proc_cpu: GAUGE
-              proc_mem: GAUGE
-              processes: GAUGE
+              proc_cpu:
+                description: Process CPU utilization as a percentage
+                rrdtype: GAUGE
+              proc_mem:
+                description: Process memory utilization as a percentage
+                rrdtype: GAUGE
+              processes:
+                description: Current running processes
+                rrdtype: GAUGE
               swap_free:
+                description: Free swap memory
                 rrdtype: GAUGE
                 aliases:
                   freeSwap: "0,+"
@@ -923,17 +993,29 @@ device_classes:
                   mem_SwapFree: "0,+"
                   memAvailSwap_memAvailSwap: "0,+"
                   swapFree__bytes: "0,+"
+              swap_in:
+                description: Bytes the system has swapped in from disk
+                rrdtype: DERIVE
+                rrdmin: 0
+              swap_out:
+                description: Bytes the system has swapped out from disk
+                rrdtype: DERIVE
+                rrdmin: 0
               swap_percent:
+                description: Swap percentage used
                 rrdtype: GAUGE
                 aliases:
                   swap_pct: "0,+"
                   swap__pct: "0,+"
               swap_used:
+                description: Used swap memory
                 rrdtype: GAUGE
                 aliases:
                   swapUsed__bytes: "0,+"
                   usedSwap: "0,+"
-              users: GAUGE
+              users:
+                description: Users currently connected on the system
+                rrdtype: GAUGE
 
           sysUpTime:
             type: Python
@@ -1101,10 +1183,12 @@ device_classes:
                   fs__pct: "0,+"
                   fs_used__pct: "0,+"
               free:
+                description: Partition free space
                 rrdtype: GAUGE
                 aliases:
                   FreeMegabytes_FreeMegabytes: "1024,/,1024,/"
               used:
+                description: Partition used space
                 rrdtype: GAUGE
                 aliases:
                   fs_used__bytes: "0,+"
