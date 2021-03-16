@@ -24,4 +24,4 @@ work of the following Zenoss ZenPacks:
 - ZenPacks.zenoss.LinuxMonitor 2.3.2
 
 which are licensed GPLv2. This code therefore is also licensed under
-the terms of the GNU Public License, verison 2.
+the terms of the GNU Public License, version 2.
