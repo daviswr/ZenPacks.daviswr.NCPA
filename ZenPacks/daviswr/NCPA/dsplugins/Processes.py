@@ -1,12 +1,14 @@
 ##############################################################################
 #
-# Parts of this file based on:
+# Copyright (C) Zenoss, Inc. 2009-2017, all rights reserved.
+# Copyright Wes Davis, 2021
+#
+# The following code is a derivative work of the following Zenoss ZenPacks:
 # - ZenPacks.zenoss.Microsoft.Windows 2.9.2
 # - ZenPacks.zenoss.LinuxMonitor 2.3.2
-# Copyright (C) Zenoss, Inc. 2009-2017, all rights reserved.
 #
-# Made available according to terms specified in
-# GNU General Public License version 2
+# which are licensed GPLv2. This code therefore is also licensed under
+# the terms of the GNU Public License, verison 2.
 #
 ##############################################################################
 
