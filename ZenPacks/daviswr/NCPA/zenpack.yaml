@@ -15,14 +15,30 @@ classes:
       expectedState:
         label: Expected Status
         type: int
-        enum: {0: "running", 1: "stopped", 2: "unknown"}
+        enum:
+          0: "running"
+          1: "stopped"
+          2: "paused"
+          3: "start_pending"
+          4: "stop_pending"
+          5: "pause_pending"
+          6: "continue_pending"
+          10: "unknown"
         grid_display: false
         order: 6
       operState:
         label: Current Status
         type: int
         datapoint: services_status
-        enum: {0: "running", 1: "stopped", 2: "unknown"}
+        enum:
+          0: "running"
+          1: "stopped"
+          2: "paused"
+          3: "start_pending"
+          4: "stop_pending"
+          5: "pause_pending"
+          6: "continue_pending"
+          10: "unknown"
         order: 10
       serviceName:
         label: Name

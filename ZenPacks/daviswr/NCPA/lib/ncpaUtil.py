@@ -16,7 +16,16 @@ multipliers = {
     'PB': 1000**5,
     }
 
-service_states = {'running': 0, 'stopped': 1, 'unknown': 2}
+service_states = {
+    'running': 0,
+    'stopped': 1,
+    'paused': 2,
+    'start_pending': 3,
+    'stop_pending': 4,
+    'pause_pending': 5,
+    'continue_pending': 6,
+    'unknown': 10,
+    }
 
 
 def build_url(host, port, token, endpoint='', params=None):
