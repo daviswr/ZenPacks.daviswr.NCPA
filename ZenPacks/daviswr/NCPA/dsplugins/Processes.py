@@ -32,7 +32,6 @@ try:
 except ImportError:
     ResponseNeverReceived = str
 
-
 from Products.ZenEvents import Event
 from Products.ZenEvents.ZenEventClasses import Status_OSProcess
 from Products.ZenModel.OSProcessMatcher import OSProcessDataMatcher
