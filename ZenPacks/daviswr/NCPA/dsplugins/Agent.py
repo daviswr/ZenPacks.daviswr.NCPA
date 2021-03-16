@@ -1,4 +1,6 @@
-""" Monitors device metrics via NCPA """
+"""Agent
+Monitors device metrics using the Nagios Cross-Platform Agent API
+"""
 
 import logging
 LOG = logging.getLogger('zen.NCPA')

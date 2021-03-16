@@ -394,8 +394,7 @@ device_classes:
               Processes:
                 dpName: ncpa_processes
                 lineType: AREA
-                stacked: true
-                rpn: "CEIL,"
+                rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
           Logged-In Users:
@@ -404,8 +403,7 @@ device_classes:
               Users:
                 dpName: ncpa_users
                 lineType: AREA
-                stacked: true
-                rpn: "CEIL,"
+                rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
           Agent Response Time:
@@ -722,21 +720,20 @@ device_classes:
               Used:
                 dpName: disk_dskPercent
                 lineType: AREA
-                stacked: true
                 format: "%5.2lf"
                 colorindex: 0
           Usage:
             units: bytes
             graphpoints:
+              DEFAULTS:
+                stacked: true
               Used:
                 dpName: disk_used
                 lineType: AREA
-                stacked: true
                 colorindex: 0
               Free:
                 dpName: disk_free
                 lineType: AREA
-                stacked: true
                 color: cccccc
           Inode Utilization:
             units: percentage
@@ -745,7 +742,6 @@ device_classes:
               Used:
                 dpName: disk_percentInodesUsed
                 lineType: AREA
-                stacked: true
                 format: "%5.2lf"
                 colorindex: 0
 
@@ -855,6 +851,71 @@ device_classes:
       OSProcess:
         targetPythonClass: Products.ZenModel.OSProcess
         description: Data about the process such as memory, CPU usage, and binary name
+        datasources:
+          processes:
+            type: Python
+            plugin_classname: ZenPacks.daviswr.NCPA.dsplugins.Processes
+            eventClass: /Status/OSProcess
+            component: "${here/id}"
+            cycletime: 60
+            datapoints:
+              cpu:
+                description: Process CPU utilization as a percentage
+                rrdtype: GAUGE
+                rrdmin: 0
+                aliases:
+                  cpu_cpu: "0,+"
+                  process_PercentProcessorTime: "0,+"
+                  ps_cpu: "100,/"
+                  ps_cpu__pct: "0,+"
+              mem:
+                description: Non-swapped physical memory a process has used
+                rrdtype: GAUGE
+                rrdmin: 0
+                aliases:
+                  mem_mem: "0,+"
+                  process_WorkingSet: "0,+"
+                  ps_mem: "0,+"
+                  ps_mem__bytes: "0,+"
+              count:
+                description: Number of matching running processes
+                rrdtype: GAUGE
+                rrdmin: 0
+                aliases:
+                  count_count: "0,+"
+                  process_count: "0,+"
+                  ps_count: "0,+"
+        graphs:
+          DEFAULTS:
+            height: 100
+            width: 500
+            miny: 0
+          Process Count:
+            units: processes
+            graphpoints:
+              Running:
+                dpName: processes_count
+                lineType: AREA
+                rpn: CEIL
+                format: "%5.0lf"
+                colorindex: 0
+          CPU Utilization:
+            units: percentage
+            maxy: 100
+            graphpoints:
+              Used:
+                dpName: processes_cpu
+                lineType: AREA
+                format: "%5.2lf"
+                colorindex: 0
+          Memory:
+            units: bytes
+            base: true
+            graphpoints:
+              Resident Set Size:
+                dpName: processes_mem
+                lineType: AREA
+                colorindex: 0
 
       # /Server/NCPA/Service
       Service:
@@ -1133,8 +1194,7 @@ device_classes:
               Processes:
                 dpName: ncpa_processes
                 lineType: AREA
-                stacked: true
-                rpn: "CEIL,"
+                rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
           Logged-In Users:
@@ -1143,8 +1203,7 @@ device_classes:
               Users:
                 dpName: ncpa_users
                 lineType: AREA
-                stacked: true
-                rpn: "CEIL,"
+                rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
           Agent Response Time:
@@ -1211,21 +1270,21 @@ device_classes:
               Used:
                 dpName: disk_dskPercent
                 lineType: AREA
-                stacked: true
                 format: "%5.2lf"
                 colorindex: 0
           Usage:
             units: bytes
             graphpoints:
+              DEFAULTS:
+                stacked: true
               Used:
                 dpName: disk_used
                 lineType: AREA
-                stacked: true
                 colorindex: 0
               Free:
                 dpName: disk_free
                 lineType: AREA
-                stacked: true
+
                 color: cccccc
 
 process_class_organizers:
