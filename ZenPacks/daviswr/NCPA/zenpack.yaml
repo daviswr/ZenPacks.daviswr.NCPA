@@ -418,7 +418,8 @@ device_classes:
             graphpoints:
               Users:
                 dpName: ncpa_users
-                lineType: AREA
+                lineType: LINE
+                lineWidth: 2
                 rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
@@ -1203,7 +1204,8 @@ device_classes:
             graphpoints:
               Users:
                 dpName: ncpa_users
-                lineType: AREA
+                lineType: LINE
+                lineWidth: 2
                 rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
