@@ -24,7 +24,6 @@ class FileSystemMap(PythonPlugin):
     deviceProperties = PythonPlugin.deviceProperties + (
         'zNcpaToken',
         'zNcpaPort',
-        'zNcpaFsBlockSize',
         'zFileSystemMapIgnoreNames',
         'zFileSystemMapIgnoreTypes',
         )
@@ -58,11 +57,10 @@ class FileSystemMap(PythonPlugin):
             output = json.loads(response)
 
             if 'error' in output:
-                log.error(
-                    '%s: %s',
-                    device.id,
-                    output['error'].get('message', output['error'])
-                    )
+                error = output['error']
+                err_str = error.get('message', 'an unknown error occurred') \
+                    if isinstance(error, dict) else str(error)
+                log.error('%s: %s', device.id, error)
                 returnValue(None)
 
         except Exception, err:
@@ -128,17 +126,10 @@ class FileSystemMap(PythonPlugin):
                 om.mount = path
                 om.storageDevice = fs_dict.get('device_name', '')[0]
                 om.type = fs_dict.get('fstype', '')
-                # NCPA does not return block size so we have to
-                # fudge it due to Products.ZenModel.FileSystem
-                block_size = int(getattr(device, 'zNcpaFsBlockSize', 4096))
-                om.blockSize = block_size
+                # NCPA does not return block size
+                om.blockSize = 1
                 fs_size, fs_unit = fs_dict.get('total', [0, ''])
-                fs_total = ncpaUtil.get_unit_value(fs_size, fs_unit)
-                blocks = (fs_total + 1) / block_size
-                block_count = int(round(blocks))
-                om.totalBlocks = block_count + 1 \
-                    if block_count < blocks \
-                    else block_count
+                om.totalBlocks = ncpaUtil.get_unit_value(fs_size, fs_unit)
                 om.title = path
                 om.id = self.prepId(filesystem)
                 rm.append(om)

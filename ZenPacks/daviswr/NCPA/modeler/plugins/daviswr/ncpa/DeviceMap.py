@@ -66,11 +66,10 @@ class DeviceMap(PythonPlugin):
             output.update(json.loads(response))
 
             if 'error' in output:
-                log.error(
-                    '%s: %s',
-                    device.id,
-                    output['error'].get('message', output['error'])
-                    )
+                error = output['error']
+                err_str = error.get('message', 'an unknown error occurred') \
+                    if isinstance(error, dict) else str(error)
+                log.error('%s: %s', device.id, error)
                 returnValue(None)
 
         except Exception, err:
