@@ -36,17 +36,14 @@ class Agent(PythonDataSourcePlugin):
         return {
             'token': context.zNcpaToken,
             'port': context.zNcpaPort,
-            'bs': context.zNcpaFsBlockSize,
             }
 
     @inlineCallbacks
     def collect(self, config):
         data = self.new_data()
         ip_addr = config.manageIp or config.id
-        # zProperties aren't going to change between datasources
         token = config.datasources[0].params.get('token', '')
         port = int(config.datasources[0].params.get('port', 5693))
-        block = int(config.datasources[0].params.get('bs', 4096))
 
         if not ip_addr:
             LOG.error('%s: No IP address or hostname', config.id)
@@ -100,35 +97,30 @@ class Agent(PythonDataSourcePlugin):
             endpoint='services',
             )
 
-        try:
-            response = yield getPage(root_url, method='GET')
-            output = json.loads(response)
-            # Move everything out from under the 'root' key
-            output = output.get('root', output)
+        response = yield getPage(root_url, method='GET')
+        output = json.loads(response)
+        # Move everything out from under the 'root' key
+        output = output.get('root', output)
 
-            response = yield getPage(cpu_avg_url, method='GET')
-            # Should give us avg/cpu
-            output['avg'] = json.loads(response)
+        response = yield getPage(cpu_avg_url, method='GET')
+        # Should give us avg/cpu
+        output['avg'] = json.loads(response)
 
-            response = yield getPage(cpu_pct_url, method='GET')
-            if 'cpu' not in output:
-                output['cpu'] = dict()
-            output['cpu'].update(json.loads(response))
+        response = yield getPage(cpu_pct_url, method='GET')
+        if 'cpu' not in output:
+            output['cpu'] = dict()
+        output['cpu'].update(json.loads(response))
 
-            response = yield getPage(cpu_avg_pct_url, method='GET')
-            if 'cpu' not in output['avg']:
-                output['avg']['cpu'] = dict()
-            output['avg']['cpu'].update(json.loads(response))
+        response = yield getPage(cpu_avg_pct_url, method='GET')
+        if 'cpu' not in output['avg']:
+            output['avg']['cpu'] = dict()
+        output['avg']['cpu'].update(json.loads(response))
 
-            response = yield getPage(proc_url, method='GET')
-            output.update(json.loads(response))
+        response = yield getPage(proc_url, method='GET')
+        output.update(json.loads(response))
 
-            response = yield getPage(srv_url, method='GET')
-            output.update(json.loads(response))
-
-        except Exception, err:
-            LOG.error('%s: %s', config.id, err)
-            returnValue(None)
+        response = yield getPage(srv_url, method='GET')
+        output.update(json.loads(response))
 
         LOG.debug('%s: NCPA API output:\n%s', config.id, str(output))
 
@@ -194,11 +186,11 @@ class Agent(PythonDataSourcePlugin):
                                 item['used'][1]
                                 )
                             stats[src][comp] = {
-                                'availBlocks': int(free / block),
+                                'availBlocks': free,
                                 'dskPercent': item['used_percent'][0],
                                 'free': free,
                                 'used': used,
-                                'usedBlocks': int(used / block),
+                                'usedBlocks': used,
                                 }
                             # Windows does not report these metrics
                             if 'inodes' in item:
