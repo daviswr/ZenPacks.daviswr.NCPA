@@ -8,6 +8,8 @@ classes:
     # zenpacklib.Service makes fields all editable
     base: [zenpacklib.OSComponent]
     label: Service
+    monitoring_templates:
+      - OSService-NCPA
     properties:
       DEFAULTS:
         grid_display: false
@@ -53,9 +55,6 @@ zProperties:
   zNcpaPort:
     type: int
     default: 5693
-  zNcpaFsBlockSize:
-    type: int
-    default: 4096
   zNcpaServicesExpectedRunning:
     type: lines
     default:
@@ -918,8 +917,8 @@ device_classes:
                 lineType: AREA
                 colorindex: 0
 
-      # /Server/NCPA/Service
-      Service:
+      # /Server/NCPA/OSService-NCPA
+      OSService-NCPA:
         targetPythonClass: ZenPacks.daviswr.NCPA.NcpaService
         description: Services' current state
         datasources:
