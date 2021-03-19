@@ -10,7 +10,7 @@ classes:
     label: Service
     properties:
       DEFAULTS:
-        grid_display: true
+        grid_display: false
         details_display: true
       expectedState:
         label: Expected Status
@@ -24,7 +24,6 @@ classes:
           5: "pause_pending"
           6: "continue_pending"
           10: "unknown"
-        grid_display: false
         order: 6
       operState:
         label: Current Status
@@ -39,11 +38,11 @@ classes:
           5: "pause_pending"
           6: "continue_pending"
           10: "unknown"
+        grid_display: true
         order: 10
       serviceName:
         label: Name
         type: string
-        grid_display: false
         order: 5
 
 zProperties:
