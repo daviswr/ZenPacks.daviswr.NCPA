@@ -3,7 +3,7 @@
 # Copyright (C) Zenoss, Inc. 2009-2017, all rights reserved.
 # Copyright Wes Davis, 2021
 #
-# The following code is a derivative work of the following Zenoss ZenPacks:
+# This code is a derivative work of the following Zenoss ZenPacks:
 # - ZenPacks.zenoss.Microsoft.Windows 2.9.2
 # - ZenPacks.zenoss.LinuxMonitor 2.3.2
 #
@@ -40,6 +40,7 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import (
     )
 
 from ZenPacks.daviswr.NCPA.lib import ncpaUtil
+from ZenPacks.daviswr.NCPA.lib.exceptions import NcpaError
 
 COUNT_DATAPOINT = 'count'
 
@@ -167,17 +168,14 @@ class Processes(PythonDataSourcePlugin):
     @inlineCallbacks
     def collect(self, config):
         ip_addr = config.manageIp or config.id
-        # zProperties aren't going to change between datasources
         token = config.datasources[0].params.get('token', '')
         port = int(config.datasources[0].params.get('port', 5693))
 
-        # Need to raise exceptions for these
-        if not ip_addr:
-            LOG.error('%s: No IP address or hostname', config.id)
-            returnValue(None)
-        elif not token:
-            LOG.error('%s: zNcpaToken not set', config.id)
-            returnValue(None)
+        if not ip_addr or not token:
+            err_str = 'No IP address or hostname' if not ip_addr \
+                else 'zNcpaToken not set'
+            LOG.error('%s: %s', config.id, err_str)
+            raise NcpaError(err_str)
 
         LOG.debug('%s: Collecting from NCPA client %s', config.id, ip_addr)
 
@@ -193,19 +191,9 @@ class Processes(PythonDataSourcePlugin):
         output = json.loads(response)
         LOG.debug('%s: NCPA API output:\n%s', config.id, str(output))
 
-        if 'error' in output:
-            # Need to raise an exception here
-            LOG.error(
-                '%s: %s',
-                config.id,
-                output.get('error', dict()).get('message', output.get(
-                    'error',
-                    'An NPCA error occured - check token'
-                    ))
-                )
-            output = dict()
-        else:
-            output = output.get('root', output).get('processes', output)
+        # This will raise an exception if necessary
+        ncpaUtil.error_check(output, config.id, LOG)
+        output = output.get('root', output).get('processes', output)
 
         returnValue(output)
 
@@ -214,8 +202,9 @@ class Processes(PythonDataSourcePlugin):
         processes = process_metrics(results)
 
         if not processes:
-            LOG.error('%s: No processes returned by NCPA', config.id)
-            return data
+            err_str = 'No processes returned by NCPA'
+            LOG.error('%s: %s', config.id, err_str)
+            raise ncpaError(err_str)
 
         # Using ZenPacks.zenoss.Microsoft.Windows.datasources.ProcessDataSource
         # as an example for OS process handling

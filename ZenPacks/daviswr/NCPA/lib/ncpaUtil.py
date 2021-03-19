@@ -2,6 +2,12 @@
 
 from urllib import urlencode
 
+from ZenPacks.daviswr.NCPA.lib.exceptions import (
+    NcpaError,
+    NcpaIncorrectCredentialsError,
+    NcpaNodeDoesNotExistError
+    )
+
 multipliers = {
     'B': 1,
     'KiB': 1024,
@@ -28,7 +34,7 @@ service_states = {
     }
 
 
-def build_url(host, port, token, endpoint='', params=None):
+def build_url(host, port, token, endpoint=None, params=None):
     """ Returns an NCPA API endpoint URL """
     api_params = {'token': token, 'units': 'B'}
     api_params.update(params if params else {})
@@ -37,6 +43,8 @@ def build_url(host, port, token, endpoint='', params=None):
     if ((isinstance(port, str) and not port.isdigit())
             or not isinstance(port, int)):
         port = 5693
+    else:
+        pass
 
     return 'https://{0}:{1}/api/{2}?{3}'.format(
         host,
@@ -44,6 +52,32 @@ def build_url(host, port, token, endpoint='', params=None):
         endpoint if endpoint else '',
         urlencode(api_params)
         )
+
+
+def error_check(output, device=None, log=None):
+    """ Checks for error message in NCPA API output and raise an exception """
+    if 'error' in output:
+        error = output['error']
+        err_str = error.get('message', 'An unknown NCPA error occurred') \
+            if isinstance(error, dict) else str(error)
+        if device and log:
+            log.error('%s: %s', device, err_str)
+
+        if 'incorrect credentials' in err_str.lower():
+            raise NcpaIncorrectCredentialsError(err_str)
+        elif 'node requested does not exist' in err_str.lower():
+            if isinstance(error, dict):
+                raise NcpaNodeDoesNotExistError(
+                    value=err_str,
+                    node=error['node'],
+                    path=error['path']
+                    )
+            else:
+                raise NcpaNodeDoesNotExistError(err_str)
+        else:
+            raise NcpaError(err_str)
+    else:
+        pass
 
 
 def get_unit_value(value, unit):
