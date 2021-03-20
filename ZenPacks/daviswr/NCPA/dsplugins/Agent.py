@@ -10,12 +10,16 @@ import json
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
 
+from Products.ZenEvents import Event
+from Products.ZenEvents.ZenEventClasses import Status_Nagios
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import (
     PythonDataSourcePlugin
     )
 
+from ZenPacks.daviswr.NCPA.dsplugins.Processes import send_to_debug
 from ZenPacks.daviswr.NCPA.lib import ncpaUtil
+from ZenPacks.daviswr.NCPA.lib.exceptions import NcpaError
 
 
 class Agent(PythonDataSourcePlugin):
@@ -40,17 +44,15 @@ class Agent(PythonDataSourcePlugin):
 
     @inlineCallbacks
     def collect(self, config):
-        data = self.new_data()
         ip_addr = config.manageIp or config.id
         token = config.datasources[0].params.get('token', '')
         port = int(config.datasources[0].params.get('port', 5693))
 
-        if not ip_addr:
-            LOG.error('%s: No IP address or hostname', config.id)
-            returnValue(None)
-        elif not token:
-            LOG.error('%s: zNcpaToken not set', config.id)
-            returnValue(None)
+        if not ip_addr or not token:
+            err_str = ('No IP address or hostname' if not ip_addr
+                       else 'zNcpaToken not set')
+            LOG.error('%s: %s', config.id, err_str)
+            raise NcpaError(err_str)
 
         LOG.debug('%s: Collecting from NCPA client %s', config.id, ip_addr)
 
@@ -123,7 +125,12 @@ class Agent(PythonDataSourcePlugin):
         output.update(json.loads(response))
 
         LOG.debug('%s: NCPA API output:\n%s', config.id, str(output))
+        # This will raise an exception if necessary
+        ncpaUtil.error_check(output, config.id, LOG)
+        returnValue(output)
 
+    def onSuccess(self, results, config):
+        data = self.new_data()
         # Parse through API output and gather useful metrics
         stats = {
             'cpu': dict(),
@@ -136,8 +143,8 @@ class Agent(PythonDataSourcePlugin):
             'sysUpTime': {None: dict()},
             }
 
-        for node_name in output:
-            node = output[node_name]
+        for node_name in results:
+            node = results[node_name]
             src = 'ncpa'
             comp = None
 
@@ -366,11 +373,39 @@ class Agent(PythonDataSourcePlugin):
                 )
             if datasource.datasource in stats:
                 src = datasource.datasource
-                comp = None if src in ['ncpa', 'sysUpTime'] \
-                    else datasource.component
+                comp = (None if src in ['ncpa', 'sysUpTime']
+                        else datasource.component)
                 for datapoint in datasource.points:
                     if comp in stats[src] and datapoint.id in stats[src][comp]:
                         value = stats[src][comp][datapoint.id]
                         data['values'][comp][datapoint.dpName] = (value, 'N')
 
-        returnValue(data)
+        # Send clear
+        data['events'].append({
+            'device': config.id,
+            'severity': Event.Clear,
+            'eventKey': 'NcpaStatus',
+            'eventClass': Status_Nagios,
+            'summary': 'NCPA data collection successful',
+        })
+
+        return data
+
+    def onError(self, error, config):
+        data = self.new_data()
+
+        msg = '{0} NCPA collection error: {1}'.format(config.id, error.value)
+        if send_to_debug(error):
+            LOG.debug(msg)
+        else:
+            LOG.error(msg)
+
+        data['events'].append({
+            'device': config.id,
+            'severity': Event.Error,
+            'eventKey': 'NcpaStatus',
+            'eventClass': Status_Nagios,
+            'summary': 'NCPA collection error: {0}'.format(error.value),
+            })
+
+        return data
