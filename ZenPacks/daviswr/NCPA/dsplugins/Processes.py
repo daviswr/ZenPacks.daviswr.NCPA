@@ -111,8 +111,8 @@ def send_to_debug(error):
     # if ConnectionLost or ResponseNeverReceived, more than
     # likely zenpython stopping.  throw messages to debug
     try:
-        if isinstance(reason, ConnectionLost) or\
-           isinstance(error.value, ResponseNeverReceived):
+        if (isinstance(reason, ConnectionLost)
+                or isinstance(error.value, ResponseNeverReceived)):
             return True
     except AttributeError:
         pass
@@ -172,8 +172,8 @@ class Processes(PythonDataSourcePlugin):
         port = int(config.datasources[0].params.get('port', 5693))
 
         if not ip_addr or not token:
-            err_str = 'No IP address or hostname' if not ip_addr \
-                else 'zNcpaToken not set'
+            err_str = ('No IP address or hostname' if not ip_addr
+                       else 'zNcpaToken not set')
             LOG.error('%s: %s', config.id, err_str)
             raise NcpaError(err_str)
 

@@ -43,8 +43,6 @@ def build_url(host, port, token, endpoint=None, params=None):
     if ((isinstance(port, str) and not port.isdigit())
             or not isinstance(port, int)):
         port = 5693
-    else:
-        pass
 
     return 'https://{0}:{1}/api/{2}?{3}'.format(
         host,
@@ -58,8 +56,8 @@ def error_check(output, device=None, log=None):
     """ Checks for error message in NCPA API output and raise an exception """
     if 'error' in output:
         error = output['error']
-        err_str = error.get('message', 'An unknown NCPA error occurred') \
-            if isinstance(error, dict) else str(error)
+        err_str = (error.get('message', 'An unknown NCPA error occurred')
+                   if isinstance(error, dict) else str(error))
         if device and log:
             log.error('%s: %s', device, err_str)
 
@@ -76,8 +74,6 @@ def error_check(output, device=None, log=None):
                 raise NcpaNodeDoesNotExistError(err_str)
         else:
             raise NcpaError(err_str)
-    else:
-        pass
 
 
 def get_unit_value(value, unit):
