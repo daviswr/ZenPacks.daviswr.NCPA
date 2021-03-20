@@ -270,14 +270,13 @@ device_classes:
           ncpa_response:
             type: HttpMonitor
             cycletime: 60
-            eventClass: /Perf/NCPA
-            component: NCPA
+            eventClass: /Status/Nagios
             hostname: ${dev/manageIp}
             ipAddress: ${dev/manageIp}
             port: ${dev/zNcpaPort}
             useSsl: true
             url: /api/system/agent_version?token=${dev/zNcpaToken}
-            regex: "\"agent_version\":"
+            regex: '"agent_version":'
             onRedirect: critical
             timeout: 5
             datapoints:
@@ -297,16 +296,14 @@ device_classes:
               DEFAULTS:
                 format: "%5.2lf"
               Utilization:
-                dpName: ncpa_cpu_percent
+                dpName: ncpa_proc_cpu
                 lineType: AREA
                 stacked: true
                 colorindex: 0
               Average:
-                dpName: ncpa_cpu_idle
-                lineType: LINE
+                dpName: ncpa_cpu_percent
+                lineType: Line
                 lineWidth: 1
-                # 100 % - idle %
-                rpn: "-100,*,100,+"
                 colorindex: 1
           CPU Time:
             units: percent
@@ -316,12 +313,25 @@ device_classes:
                 stacked: true
                 format: "%5.2lf"
                 rpn: "100,*"
+              cpu_system:
+                dpName: ncpa_cpu_system
+                lineType: DONTDRAW
+                stacked: false
+              cpu_user:
+                dpName: ncpa_cpu_user
+                lineType: DONTDRAW
+                stacked: false
+              Other:
+                dpName: ncpa_cpu_idle
+                rpn: "-100,*,100,+,cpu_system-rpn,-,cpu_user-rpn,-"
+                legend: "IO, Interrupt, etc"
+                color: 00cc00
               System:
                 dpName: ncpa_cpu_system
-                colorindex: 0
+                colorindex: 1
               User:
                 dpName: ncpa_cpu_user
-                colorindex: 1
+                colorindex: 2
           Memory and Swap Summary:
             units: percentage
             graphpoints:
@@ -508,20 +518,11 @@ device_classes:
             units: percentage
             maxy: 100
             graphpoints:
-              DEFAULTS:
-                format: "%5.2lf"
               Utilization:
                 dpName: cpu_percent
                 lineType: AREA
-                stacked: true
+                format: "%5.2lf"
                 colorindex: 0
-              Average:
-                dpName: cpu_idle
-                lineType: LINE
-                lineWidth: 1
-                # 100 % - idle %
-                rpn: "-100,*,100,+"
-                colorindex: 1
           CPU Time:
             units: percent
             graphpoints:
@@ -530,12 +531,25 @@ device_classes:
                 stacked: true
                 format: "%5.2lf"
                 rpn: "100,*"
+              system:
+                dpName: cpu_system
+                lineType: DONTDRAW
+                stacked: false
+              user:
+                dpName: cpu_user
+                lineType: DONTDRAW
+                stacked: false
+              Other:
+                dpName: cpu_idle
+                rpn: "-100,*,100,+,system-rpn,-,user-rpn,-"
+                legend: "IO, Interrupt, etc"
+                color: 00cc00
               System:
                 dpName: cpu_system
-                colorindex: 0
+                colorindex: 1
               User:
                 dpName: cpu_user
-                colorindex: 1
+                colorindex: 2
 
       # /Server/NCPA/ethernetCsmacd
       ethernetCsmacd:
@@ -674,7 +688,7 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
-              # free / zNcpaFsBlockSize
+              # free
               availBlocks:
                 rrdtype: GAUGE
                 aliases:
@@ -713,7 +727,7 @@ device_classes:
                   fs_used__bytes: "0,+"
                   usedfilesystemspace__bytes: "0,+"
                   usedFilesystemSpace__bytes: "0,+"
-              # used / zNcpaFsBlockSize
+              # used
               usedBlocks:
                 rrdtype: GAUGE
                 aliases:
@@ -1088,14 +1102,14 @@ device_classes:
           ncpa_response:
             type: HttpMonitor
             cycletime: 60
-            eventClass: /Perf/NCPA
-            component: NCPA
+            eventClass: /Status/Nagios
+            component: ncpa_listener
             hostname: ${dev/manageIp}
             ipAddress: ${dev/manageIp}
             port: ${dev/zNcpaPort}
             useSsl: true
             url: /api/system/agent_version?token=${dev/zNcpaToken}
-            regex: "\"agent_version\":"
+            regex: '"agent_version":'
             onRedirect: critical
             timeout: 5
             datapoints:
@@ -1115,16 +1129,14 @@ device_classes:
               DEFAULTS:
                 format: "%5.2lf"
               Utilization:
-                dpName: ncpa_cpu_percent
+                dpName: ncpa_proc_cpu
                 lineType: AREA
                 stacked: true
                 colorindex: 0
               Average:
-                dpName: ncpa_cpu_idle
-                lineType: LINE
+                dpName: ncpa_cpu_percent
+                lineType: Line
                 lineWidth: 1
-                # 100 % - idle %
-                rpn: "-100,*,100,+"
                 colorindex: 1
           CPU Time:
             units: percent
@@ -1134,12 +1146,25 @@ device_classes:
                 stacked: true
                 format: "%5.2lf"
                 rpn: "100,*"
+              cpu_system:
+                dpName: ncpa_cpu_system
+                lineType: DONTDRAW
+                stacked: false
+              cpu_user:
+                dpName: ncpa_cpu_user
+                lineType: DONTDRAW
+                stacked: false
+              Other:
+                dpName: ncpa_cpu_idle
+                rpn: "-100,*,100,+,cpu_system-rpn,-,cpu_user-rpn,-"
+                legend: "IO, Interrupt, etc"
+                color: 00cc00
               System:
                 dpName: ncpa_cpu_system
-                colorindex: 0
+                colorindex: 1
               User:
                 dpName: ncpa_cpu_user
-                colorindex: 1
+                colorindex: 2
           Memory and Swap Summary:
             units: percentage
             graphpoints:
@@ -1230,7 +1255,7 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
-              # free / zNcpaFsBlockSize
+              # free
               availBlocks:
                 rrdtype: GAUGE
                 aliases:
@@ -1254,7 +1279,7 @@ device_classes:
                   fs_used__bytes: "0,+"
                   usedfilesystemspace__bytes: "0,+"
                   usedFilesystemSpace__bytes: "0,+"
-              # used / zNcpaFsBlockSize
+              # used
               usedBlocks:
                 rrdtype: GAUGE
                 aliases:
