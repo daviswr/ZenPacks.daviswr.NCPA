@@ -86,6 +86,7 @@ device_classes:
         - daviswr.ncpa.ServiceMap
       zDeviceTemplates:
         - Device
+        - NCPA
         - Ping
       # Type strings don't match HOST-RESOURCES-MIB
       # https://github.com/NagiosEnterprises/ncpa/blob/master/agent/etc/ncpa.cfg
@@ -267,23 +268,6 @@ device_classes:
               # api/system/uptime * 100
               sysUpTime: GAUGE
 
-          ncpa_response:
-            type: HttpMonitor
-            cycletime: 60
-            eventClass: /Status/Nagios
-            hostname: ${dev/manageIp}
-            ipAddress: ${dev/manageIp}
-            port: ${dev/zNcpaPort}
-            useSsl: true
-            url: /api/system/agent_version?token=${dev/zNcpaToken}
-            regex: '"agent_version":'
-            onRedirect: critical
-            timeout: 5
-            datapoints:
-              # Will be automatically added by HttpMonitor anyway
-              time: GAUGE
-              size: GAUGE
-
         graphs:
           DEFAULTS:
             height: 100
@@ -431,6 +415,33 @@ device_classes:
                 rpn: CEIL
                 format: "%5.0lf"
                 colorindex: 0
+
+      # /Server/NCPA/NCPA
+      NCPA:
+        targetPythonClass: Products.ZenModel.Device
+        description: Nagios Cross-Platform Agent response time
+        datasources:
+          ncpa_response:
+            type: HttpMonitor
+            cycletime: 60
+            eventClass: /Status/Nagios
+            hostname: ${dev/manageIp}
+            ipAddress: ${dev/manageIp}
+            port: ${dev/zNcpaPort}
+            useSsl: true
+            url: /api/system/agent_version?token=${dev/zNcpaToken}
+            regex: '"agent_version":'
+            onRedirect: critical
+            timeout: 5
+            datapoints:
+              # Will be automatically added by HttpMonitor anyway
+              time: GAUGE
+              size: GAUGE
+        graphs:
+          DEFAULTS:
+            height: 100
+            width: 500
+            miny: 0
           Agent Response Time:
             units: milliseconds
             graphpoints:
@@ -1099,24 +1110,6 @@ device_classes:
             datapoints:
               sysUpTime: GAUGE
 
-          ncpa_response:
-            type: HttpMonitor
-            cycletime: 60
-            eventClass: /Status/Nagios
-            component: ncpa_listener
-            hostname: ${dev/manageIp}
-            ipAddress: ${dev/manageIp}
-            port: ${dev/zNcpaPort}
-            useSsl: true
-            url: /api/system/agent_version?token=${dev/zNcpaToken}
-            regex: '"agent_version":'
-            onRedirect: critical
-            timeout: 5
-            datapoints:
-              # Will be automatically added by HttpMonitor anyway
-              time: GAUGE
-              size: GAUGE
-
         graphs:
           DEFAULTS:
             height: 100
@@ -1231,16 +1224,6 @@ device_classes:
                 lineWidth: 2
                 rpn: CEIL
                 format: "%5.0lf"
-                colorindex: 0
-          Agent Response Time:
-            units: milliseconds
-            graphpoints:
-              Time:
-                dpName: ncpa_response_time
-                rpn: "1000,*"
-                lineType: LINE
-                lineWidth: 2
-                format: "%5.2lf"
                 colorindex: 0
 
       # /Server/NCPA/Windows/FileSystem
