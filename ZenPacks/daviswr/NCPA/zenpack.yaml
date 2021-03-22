@@ -277,18 +277,11 @@ device_classes:
             units: percentage
             maxy: 100
             graphpoints:
-              DEFAULTS:
-                format: "%5.2lf"
               Utilization:
-                dpName: ncpa_proc_cpu
-                lineType: AREA
-                stacked: true
-                colorindex: 0
-              Average:
                 dpName: ncpa_cpu_percent
-                lineType: Line
-                lineWidth: 1
-                colorindex: 1
+                lineType: AREA
+                format: "%5.2lf"
+                colorindex: 0
           CPU Time:
             units: percent
             graphpoints:
@@ -884,6 +877,14 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
+              count:
+                description: Number of matching running processes
+                rrdtype: GAUGE
+                rrdmin: 0
+                aliases:
+                  count_count: "0,+"
+                  process_count: "0,+"
+                  ps_count: "0,+"
               cpu:
                 description: Process CPU utilization as a percentage
                 rrdtype: GAUGE
@@ -902,14 +903,6 @@ device_classes:
                   process_WorkingSet: "0,+"
                   ps_mem: "0,+"
                   ps_mem__bytes: "0,+"
-              count:
-                description: Number of matching running processes
-                rrdtype: GAUGE
-                rrdmin: 0
-                aliases:
-                  count_count: "0,+"
-                  process_count: "0,+"
-                  ps_count: "0,+"
         graphs:
           DEFAULTS:
             height: 100
@@ -1119,18 +1112,11 @@ device_classes:
             units: percentage
             maxy: 100
             graphpoints:
-              DEFAULTS:
-                format: "%5.2lf"
               Utilization:
-                dpName: ncpa_proc_cpu
-                lineType: AREA
-                stacked: true
-                colorindex: 0
-              Average:
                 dpName: ncpa_cpu_percent
-                lineType: Line
-                lineWidth: 1
-                colorindex: 1
+                lineType: AREA
+                format: "%5.2lf"
+                colorindex: 0
           CPU Time:
             units: percent
             graphpoints:
