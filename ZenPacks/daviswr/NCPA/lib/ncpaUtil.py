@@ -1,6 +1,8 @@
 """ A library of NCPA-related functions """
 
-from urllib import urlencode
+from urllib import quote, urlencode
+
+from Products.ZenEvents import Event
 
 from ZenPacks.daviswr.NCPA.lib.exceptions import (
     NcpaError,
@@ -47,7 +49,7 @@ def build_url(host, port, token, endpoint=None, params=None):
     return 'https://{0}:{1}/api/{2}?{3}'.format(
         host,
         port,
-        endpoint if endpoint else '',
+        quote(endpoint) if endpoint else '',
         urlencode(api_params)
         )
 
@@ -79,3 +81,39 @@ def error_check(output, device=None, log=None):
 def get_unit_value(value, unit):
     """ Returns value multiplied by given unit """
     return int(float(value) * multipliers.get(unit, 1))
+
+
+def parse_nagios(stdout):
+    """ Parses Nagios-style datapoint output """
+    values = dict()
+    state, value_str = stdout.split('|') if '|' in stdout else (stdout, '')
+
+    if 'WARNING' in state.upper():
+        severity = Event.Warning
+    elif 'CRITICAL' in state.upper():
+        severity = Event.Error
+    elif 'OK' not in state.upper():
+        severity = Event.Warning
+    else:
+        severity = Event.Clear
+
+    if value_str:
+        # Make thresholds easy to ignore
+        pairs = value_str.replace(';', ' ').split(' ')
+        for pair in pairs:
+            # Only process actual key-value pairs
+            if '=' in pair:
+                key, value = pair.split('=')
+                # Clean up included units
+                if not value.isdigit():
+                    new_value = ''
+                    for char in value:
+                        if char in '0123456789-.':
+                            new_value += char
+                    value = new_value
+                if value:
+                    values.update({
+                        key: float(value) if '.' in value else int(value)
+                        })
+
+    return state, severity, values
