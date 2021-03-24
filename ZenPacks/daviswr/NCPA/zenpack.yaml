@@ -4,8 +4,32 @@ class_relationships:
   - Products.ZenModel.Device.Device(ncpaServices) 1:MC Service(server)
 
 classes:
+  FileSystem:
+    # RRDs are no longer under os/filesystems when using ZPL-based components
+    base: [zenpacklib.FileSystem]
+    label: File System
+    plural_label: File Systems
+    monitoring_templates:
+      - FileSystem
+    properties:
+      DEFAULTS:
+        type: int
+        grid_display: false
+        details_display: true
+      criticalThreshold:
+        label: Critical Usage Percentage
+        short_label: "Critical %"
+        default: 90
+        editable: true
+        order: 21
+      warningThreshold:
+        label: Warning Usage Percentage
+        short_label: "Warning %"
+        default: 70
+        editable: true
+        order: 20
+
   Service:
-    # zenpacklib.Service makes fields all editable
     base: [zenpacklib.OSComponent]
     label: Service
     monitoring_templates:
@@ -692,7 +716,7 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
-              # free
+              # free / estimated block size
               availBlocks:
                 rrdtype: GAUGE
                 aliases:
@@ -731,7 +755,7 @@ device_classes:
                   fs_used__bytes: "0,+"
                   usedfilesystemspace__bytes: "0,+"
                   usedFilesystemSpace__bytes: "0,+"
-              # used
+              # used / estimated block size
               usedBlocks:
                 rrdtype: GAUGE
                 aliases:
@@ -1224,7 +1248,7 @@ device_classes:
             component: "${here/id}"
             cycletime: 60
             datapoints:
-              # free
+              # free / estimated block size
               availBlocks:
                 rrdtype: GAUGE
                 aliases:
@@ -1248,7 +1272,7 @@ device_classes:
                   fs_used__bytes: "0,+"
                   usedfilesystemspace__bytes: "0,+"
                   usedFilesystemSpace__bytes: "0,+"
-              # used
+              # used / estimated block size
               usedBlocks:
                 rrdtype: GAUGE
                 aliases:

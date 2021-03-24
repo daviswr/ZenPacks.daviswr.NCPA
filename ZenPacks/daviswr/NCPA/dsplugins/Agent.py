@@ -20,6 +20,9 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import (
 from ZenPacks.daviswr.NCPA.dsplugins.Processes import send_to_debug
 from ZenPacks.daviswr.NCPA.lib import ncpaUtil
 from ZenPacks.daviswr.NCPA.lib.exceptions import NcpaError
+from ZenPacks.daviswr.NCPA.modeler.plugins.daviswr.ncpa.FileSystemMap import (
+    guess_block_size
+    )
 
 
 class Agent(PythonDataSourcePlugin):
@@ -188,16 +191,21 @@ class Agent(PythonDataSourcePlugin):
                                 item['free'][0],
                                 item['free'][1]
                                 )
+                            total = ncpaUtil.get_unit_value(
+                                item['total'][0],
+                                item['total'][1]
+                                )
                             used = ncpaUtil.get_unit_value(
                                 item['used'][0],
                                 item['used'][1]
                                 )
+                            block_size = int(guess_block_size(total))
                             stats[src][comp] = {
-                                'availBlocks': free,
+                                'availBlocks': int(free / block_size),
                                 'dskPercent': item['used_percent'][0],
                                 'free': free,
                                 'used': used,
-                                'usedBlocks': used,
+                                'usedBlocks': int(used / block_size),
                                 }
                             # Windows does not report these metrics
                             if 'inodes' in item:

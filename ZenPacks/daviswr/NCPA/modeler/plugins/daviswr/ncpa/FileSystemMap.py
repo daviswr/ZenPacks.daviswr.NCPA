@@ -1,3 +1,16 @@
+##############################################################################
+#
+# Copyright (C) Zenoss, Inc. 2013, 2017, all rights reserved.
+# Copyright Wes Davis, 2021
+#
+# This code is a derivative work of the following Zenoss ZenPack:
+# - ZenPacks.zenoss.Microsoft.Windows 2.9.2
+#
+# which is licensed GPLv2. This code therefore is also licensed under
+# the terms of the GNU Public License, version 2.
+#
+##############################################################################
+
 __doc__ = """
 Models filesystems using the Nagios Cross-Platform Agent
 """
@@ -13,13 +26,35 @@ from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from ZenPacks.daviswr.NCPA.lib import ncpaUtil
 
 
+def guess_block_size(bytes):
+    """
+    From
+    ZenPacks.zenoss.Microsoft.Windows.modeler.plugins.zenoss.winrm.FileSystems
+
+    Return a best guess at block size given bytes.
+    Most of the MS operating systems don't seem to return a value for
+    block size.  So, let's try to guess by how the size is rounded off.
+    That is, if the number is divisible by 1024, that's probably due to
+    the block size. Ya, it's a kludge.
+    """
+
+    if bytes:
+        for i in range(10, 17):
+            if int(bytes) / float(1 << i) % 1:
+                return 1 << (i - 1)
+
+    # Naive assumption. Though so far it seems to work.
+    return 4096
+
+
 class FileSystemMap(PythonPlugin):
     """ Nagios Cross-Platform Agent filesystem modeler plugin """
 
     maptype = 'FileSystemMap'
     compname = 'os'
     relname = 'filesystems'
-    modname = 'Products.ZenModel.FileSystem'
+    #modname = 'Products.ZenModel.FileSystem'
+    modname = 'ZenPacks.daviswr.NCPA.FileSystem'
 
     deviceProperties = PythonPlugin.deviceProperties + (
         'zNcpaToken',
@@ -60,7 +95,7 @@ class FileSystemMap(PythonPlugin):
                 error = output['error']
                 err_str = error.get('message', 'an unknown error occurred') \
                     if isinstance(error, dict) else str(error)
-                log.error('%s: %s', device.id, error)
+                log.error('%s: %s', device.id, err_str)
                 returnValue(None)
 
         except Exception, err:
@@ -126,10 +161,12 @@ class FileSystemMap(PythonPlugin):
                 om.mount = path
                 om.storageDevice = fs_dict.get('device_name', '')[0]
                 om.type = fs_dict.get('fstype', '')
-                # NCPA does not return block size
-                om.blockSize = 1
                 fs_size, fs_unit = fs_dict.get('total', [0, ''])
-                om.totalBlocks = ncpaUtil.get_unit_value(fs_size, fs_unit)
+                fs_total = ncpaUtil.get_unit_value(fs_size, fs_unit)
+                # NCPA does not return block size
+                block_size = int(guess_block_size(fs_total))
+                om.blockSize = block_size
+                om.totalBlocks = int(fs_total / block_size)
                 om.title = path
                 om.id = self.prepId(filesystem)
                 rm.append(om)
