@@ -57,7 +57,7 @@ class ServiceMap(PythonPlugin):
                 error = output['error']
                 err_str = error.get('message', 'an unknown error occurred') \
                     if isinstance(error, dict) else str(error)
-                log.error('%s: %s', device.id, error)
+                log.error('%s: %s', device.id, err_str)
                 returnValue(None)
 
         except Exception, err:
