@@ -154,6 +154,7 @@ device_classes:
       zHardDiskMapMatch: "^[hs]d[a-z]\\d+$|c\\d+t\\d+d\\d+s\\d+$|
 ^cciss\\/c\\dd\\dp\\d$|^dm\\-\\d$|^nvme\\d+n\\d+$"
       zIcon: /zport/dmd/img/icons/server.png
+      zInterfaceMapIgnoreNames: "(ch.|docker|mgi|veth|vlan|virbr|^lo)"
       zNcpaServicesExpectedRunning:
         - ncpa_listener
         - ncpa_passive
@@ -1162,6 +1163,8 @@ device_classes:
     zProperties:
       zHardDiskMapMatch: "Physical|Drive"
       zIcon: /zport/dmd/img/icons/server-windows.png
+      zInterfaceMapIgnoreNames: "(Extension|Filter|ISATAP|Kernel Debug|
+Miniport|RAS Async|Scheduler|Loopback)"
       zNcpaServicesExpectedRunning:
         - ncpalistener
         - ncpapassive
@@ -1560,7 +1563,6 @@ device_classes:
               Free:
                 dpName: disk_free
                 lineType: AREA
-
                 color: cccccc
 
 process_class_organizers:
