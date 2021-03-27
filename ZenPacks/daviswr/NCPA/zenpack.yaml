@@ -16,18 +16,18 @@ classes:
         type: int
         grid_display: false
         details_display: true
-      criticalThreshold:
-        label: Critical Usage Percentage
-        short_label: "Critical %"
-        default: 90
-        editable: true
-        order: 21
       warningThreshold:
         label: Warning Usage Percentage
         short_label: "Warning %"
         default: 70
         editable: true
         order: 20
+      errorThreshold:
+        label: Error Usage Percentage
+        short_label: "Error %"
+        default: 90
+        editable: true
+        order: 21
 
   Service:
     base: [zenpacklib.OSComponent]
@@ -74,10 +74,10 @@ classes:
 zProperties:
   DEFAULTS:
     category: Nagios
+    type: int
   zNcpaToken:
     type: string
   zNcpaPort:
-    type: int
     default: 5693
   zNcpaServicesExpectedRunning:
     type: lines
@@ -89,11 +89,45 @@ zProperties:
     type: lines
   zNcpaServicesIgnored:
     type: lines
-  # Warn & crit thresholds for:
-  # cpu util
-  # memory util
-  # process count
-  # filesystem util
+  # The Nagios NCPA default thresholds seem unreasonably low
+  # Nagios local & SNMP check defaults are better
+  zNcpaThresholdCpuWarning:
+    # NCPA check default is 20
+    default: 80
+  zNcpaThresholdCpuError:
+    # NCPA check default is 40
+    default: 90
+  zNcpaThresholdUsersWarning:
+    # NCPA check default is 2
+    # SSH remote check default is 5
+    default: 20
+  zNcpaThresholdUsersError:
+    # NCPA check default is 4
+    # SSH remote check default is 10
+    default: 50
+  zNcpaThresholdMemoryWarning:
+    # NCPA check default is 50
+    # Local check default is 70
+    default: 80
+  zNcpaThresholdMemoryError:
+    # NCPA & local check defaults are 80
+    default: 90
+  zNcpaThresholdSwapWarning:
+    # NCPA & SNMP check defaults are 5
+    # SSH remote check default is 70
+    default: 50
+  zNcpaThresholdSwapError:
+    # NCPA & SNMP check defaults are 10
+    # SSH remote check default is 90
+    default: 70
+  zNcpaThresholdProcWarning:
+    # NCPA & ssh remote check defaults are 150
+    default: 400
+  zNcpaThresholdProcError:
+    # SSH remote check default is 170
+    # NCPA check default is 250
+    default: 500
+
 
 device_classes:
   /Server/NCPA:
@@ -113,8 +147,7 @@ device_classes:
         - NCPA
         - Ping
       # Type strings don't match HOST-RESOURCES-MIB
-      # https://github.com/NagiosEnterprises/ncpa/blob/master/agent/etc/ncpa.cfg
-      # exclude_fs_types = aufs,autofs,binfmt_misc,cifs,cgroup,configfs,debugfs,devpts,devtmpfs,encryptfs,efivarfs,fuse,fusectl,hugetlbfs,mqueue,nfs,overlayfs,proc,pstore,rpc_pipefs,securityfs,selinuxfs,smb,sysfs,tmpfs,tracefs
+      # https://github.com/NagiosEnterprises/ncpa/blob/master/agent/etc/ncpa.cfg#L42
       zFileSystemMapIgnoreTypes:
         - cdrom
       # Default /Server/Linux + ^nvme\d+n\d+$
@@ -291,6 +324,88 @@ device_classes:
             datapoints:
               # api/system/uptime * 100
               sysUpTime: GAUGE
+
+        thresholds:
+          CPU Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_cpu_percent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdCpuWarning
+          CPU Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_cpu_percent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdCpuError
+          User Count Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_users
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdUsersWarning
+          User Count Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_users
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdUsersError
+          Memory Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_memory_percent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdMemoryWarning
+          Memory Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_memory_percent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdMemoryError
+          Swap Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_swap_percent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdSwapWarning
+          Swap Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_swap_percent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdSwapError
+          Process Count Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_processes
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdProcWarning
+          Process Count Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_processes
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdProcError
 
         graphs:
           DEFAULTS:
@@ -487,6 +602,41 @@ device_classes:
               rtt_max: GAUGE
               rtt_losspct: GAUGE
               rtt_stddev: GAUGE
+
+        thresholds:
+          Ping Time Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - Ping_rtt_avg
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: 100
+          Ping Time Error:
+            type: MinMaxThreshold
+            dsnames:
+              - Ping_rtt_avg
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: 500
+          Packet Loss Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - Ping_rtt_avg
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: 20
+          Packet Loss Error:
+            type: MinMaxThreshold
+            dsnames:
+              - Ping_rtt_avg
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: 60
+
         graphs:
           DEFAULTS:
             height: 100
@@ -765,6 +915,25 @@ device_classes:
                 rrdtype: GAUGE
                 aliases:
                   idisk_usedInodes: "0,+"
+
+        thresholds:
+          Disk Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - disk_dskPercent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.warningThreshold
+          Disk Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - disk_dskPercent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.errorThreshold
+
         graphs:
           DEFAULTS:
             height: 100
@@ -1005,6 +1174,9 @@ device_classes:
         - SQLTELEMETRY$SQLEXPRESS
         - WAS
         - W3SVC
+      # Logged-in user thresholds seem more important for RDP than SSH
+      zNcpaThresholdUsersWarning: 2
+      zNcpaThresholdUsersError: 4
     templates:
       # /Server/NCPA/Windows/Device
       # Windows does not reported swapped_in or swapped_out metrics
@@ -1126,6 +1298,72 @@ device_classes:
             cycletime: 60
             datapoints:
               sysUpTime: GAUGE
+
+        thresholds:
+          CPU Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_cpu_percent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdCpuWarning
+          CPU Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_cpu_percent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdCpuError
+          User Count Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_users
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdUsersWarning
+          User Count Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_users
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdUsersError
+          Memory Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_memory_percent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdMemoryWarning
+          Memory Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_memory_percent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdMemoryError
+          Swap Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_swap_percent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdSwapWarning
+          Swap Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - ncpa_swap_percent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.zNcpaThresholdSwapError
 
         graphs:
           DEFAULTS:
@@ -1277,6 +1515,25 @@ device_classes:
                 rrdtype: GAUGE
                 aliases:
                   usedBlocks_usedBlocks: "0,+"
+
+        thresholds:
+          Disk Usage Warning:
+            type: MinMaxThreshold
+            dsnames:
+              - disk_dskPercent
+            severity: 3
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.warningThreshold
+          Disk Usage Error:
+            type: MinMaxThreshold
+            dsnames:
+              - disk_dskPercent
+            severity: 4
+            enabled: true
+            eventClass: /Perf/NCPA
+            maxval: here.errorThreshold
+
         graphs:
           DEFAULTS:
             height: 100
