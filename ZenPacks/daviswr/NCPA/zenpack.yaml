@@ -1424,12 +1424,6 @@ Miniport|RAS Async|Scheduler|Loopback)"
                 lineWidth: 2
                 format: "%5.2lf"
                 colorindex: 1
-              Resident Set:
-                dpName: ncpa_proc_mem
-                lineType: LINE
-                lineWidth: 2
-                format: "%5.2lf"
-                colorindex: 2
           # Free = Available on Windows
           Memory Utilization:
             units: bytes
