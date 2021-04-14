@@ -3,9 +3,9 @@
 # or saved.  Do not modify them directly here.
 # NB: PACKAGES is deprecated
 NAME = "ZenPacks.daviswr.NCPA"
-VERSION = "0.0.1-dev"
+VERSION = "1.0.0"
 AUTHOR = "Wes Davis"
-LICENSE = "MIT"
+LICENSE = "GPLv2"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.daviswr']
 PACKAGES = ['ZenPacks', 'ZenPacks.daviswr', 'ZenPacks.daviswr.NCPA']
 INSTALL_REQUIRES = ['ZenPacks.zenoss.ZenPackLib', 'ZenPacks.zenoss.HttpMonitor', 'ZenPacks.zenoss.PythonCollector']
