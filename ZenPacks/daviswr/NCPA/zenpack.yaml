@@ -624,7 +624,7 @@ device_classes:
           Packet Loss Warning:
             type: MinMaxThreshold
             dsnames:
-              - Ping_rtt_avg
+              - Ping_rtt_losspct
             severity: 3
             enabled: true
             eventClass: /Perf/NCPA
@@ -632,7 +632,7 @@ device_classes:
           Packet Loss Error:
             type: MinMaxThreshold
             dsnames:
-              - Ping_rtt_avg
+              - Ping_rtt_losspct
             severity: 4
             enabled: true
             eventClass: /Perf/NCPA
